@@ -260,11 +260,11 @@ const Game = {
                 if (!m.hit) {
                     const mX = plat.x + m.xOffset;
                     const mY = plat.y - m.yOffset;
-                    // Tighter AABB for mines to be fair
-                    const mHitX = mX + 10;
-                    const mHitY = mY + 10;
-                    const mHitW = m.width - 20;
-                    const mHitH = m.height - 20;
+                    // Tighter AABB for mines to be fair (15px inset on the 70px sprite)
+                    const mHitX = mX + 15;
+                    const mHitY = mY + 15;
+                    const mHitW = m.width - 30;
+                    const mHitH = m.height - 30;
 
                     if (gX < mHitX + mHitW && gX + gW > mHitX &&
                         gY < mHitY + mHitH && gY + gH > mHitY) {

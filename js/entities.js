@@ -103,9 +103,9 @@ class Platform {
                 const mineX = 50 + Math.random() * (width - 100);
                 this.mines.push({
                     xOffset: mineX,
-                    yOffset: 30, // Roll on ground
-                    width: 50,
-                    height: 50,
+                    yOffset: 55, // Sitting on the grass (slightly buried since height is 70)
+                    width: 70,
+                    height: 70,
                     hit: false
                 });
             }
@@ -211,8 +211,8 @@ class Goat {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.width = 110;
-        this.height = 110;
+        this.width = 100;
+        this.height = 100;
 
         this.velocityY = 0;
         this.gravity = 0.8;
@@ -257,8 +257,12 @@ class Goat {
                     currentGravity = this.gravity * 0.5;
                 }
             } else {
-                // If voice stops, fall fast!
-                currentGravity += 0.5; // Heavy gravity
+                // If voice stops completely, fall very aggressively
+                currentGravity = this.gravity * 3.0;
+                if (this.velocityY < 0) {
+                    // Instantly kill upward momentum if user stops voice on the way up
+                    this.velocityY *= 0.2;
+                }
             }
         }
 
