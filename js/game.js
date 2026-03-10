@@ -117,6 +117,8 @@ const Game = {
         this.gameSpeed = this.baseSpeed;
         this.isGameOver = false;
         this.isRunning = true;
+        this.isDead = false;
+        this.particles = [];
 
         // Starting goat position, a bit to the left
         this.goat = new Goat(this.canvas.width * 0.15, this.canvas.height * 0.3);
@@ -151,6 +153,19 @@ const Game = {
     },
 
     update(deltaTime) {
+        if (this.isDead) {
+            // Update particles for explosion
+            if (this.particles) {
+                for (let p of this.particles) {
+                    p.x += p.vx * (deltaTime / 16);
+                    p.y += p.vy * (deltaTime / 16);
+                    p.vy += 0.5 * (deltaTime / 16); // gravity
+                    p.life -= 0.02 * (deltaTime / 16); // fade out
+                }
+            }
+            return; // Skip rest of game logic while exploding
+        }
+
         VoiceAnalyzer.update(deltaTime);
         const voiceData = {
             isVocalizing: VoiceAnalyzer.isVocalizing,
@@ -167,26 +182,31 @@ const Game = {
             // Move forward when vocalizing
             this.gameSpeed = this.baseSpeed;
 
+            const minPitch = 80;
+            const maxPitch = 800; // Increased max threshold for "very very high" pitch
+
+            let pitchRange = Math.max(0, voiceData.pitch - minPitch);
+            let intensity = Math.min(pitchRange / (maxPitch - minPitch), 1.0);
+
+            // Allow intensity to scale up to 1.5x for massive jumps, but floor at 0.2 for tiny hops
+            intensity = Math.max(0.2, intensity * 1.5);
+
             // Allow jump only if grounded AND we haven't already jumped during this sound burst
             if (this.goat.isGrounded && !this.goat.hasJumpedThisBurst) {
-                // Map pitch to jump intensity. 
-                // e.g., low hum (~100Hz) = small jump (0.1)
-                // high squeak (~500Hz) = big jump (1.0)
-                const minPitch = 80;
-                const maxPitch = 800; // Increased max threshold for "very very high" pitch
-
-                let pitchRange = Math.max(0, voiceData.pitch - minPitch);
-                let intensity = Math.min(pitchRange / (maxPitch - minPitch), 1.0);
-
-                // Allow intensity to scale up to 1.5x for massive jumps, but floor at 0.2 for tiny hops
-                intensity = Math.max(0.2, intensity * 1.5);
-
                 this.goat.jump(intensity);
                 this.goat.hasJumpedThisBurst = true; // Block further jumps until sound stops
+                this.goat.maxIntensityThisBurst = intensity;
+            } else if (!this.goat.isGrounded && this.goat.hasJumpedThisBurst) {
+                // If mid-air and the user dramatically spikes pitch...
+                if (intensity > (this.goat.maxIntensityThisBurst || 0) + 0.2) {
+                    this.goat.jump(intensity, true); // Force a mid-air jump boost
+                    this.goat.maxIntensityThisBurst = intensity; // Update high watermark
+                }
             }
         } else {
             // Sound stopped, reset the jump burst blocker so we can jump again next time
             this.goat.hasJumpedThisBurst = false;
+            this.goat.maxIntensityThisBurst = 0;
         }
 
         this.goat.update(deltaTime, voiceData);
@@ -286,18 +306,54 @@ const Game = {
             plat.draw(this.ctx);
         }
 
-        this.goat.draw(this.ctx);
+        if (!this.isDead) {
+            this.goat.draw(this.ctx);
+        }
+
+        // Draw explosion particles
+        if (this.isDead && this.particles) {
+            for (let p of this.particles) {
+                if (p.life > 0) {
+                    this.ctx.globalAlpha = Math.max(0, p.life);
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+            }
+            this.ctx.globalAlpha = 1.0;
+        }
     },
 
     die() {
-        this.isGameOver = true;
-        this.isRunning = false;
-
-        this.hudScreen.classList.remove('active');
-        this.gameOverScreen.classList.add('active');
-        this.finalScore.textContent = this.score;
-
+        if (this.isDead) return;
+        this.isDead = true;
+        this.gameSpeed = 0;
         SFX.playGameOver();
+
+        // Spawn firework particles
+        this.particles = [];
+        for (let i = 0; i < 60; i++) {
+            this.particles.push({
+                x: this.goat.x + this.goat.width / 2,
+                y: this.goat.y + this.goat.height / 2,
+                vx: (Math.random() - 0.5) * 30,
+                vy: (Math.random() - 0.5) * 30 - 10, // Initial upward burst
+                life: 1.0,
+                color: ['#ff0000', '#ff8800', '#ffff00', '#ffffff', '#ff00ff'][Math.floor(Math.random() * 5)],
+                size: Math.random() * 8 + 4
+            });
+        }
+
+        // Delay game over screen to let animation play
+        setTimeout(() => {
+            this.isGameOver = true;
+            this.isRunning = false;
+
+            this.hudScreen.classList.remove('active');
+            this.gameOverScreen.classList.add('active');
+            this.finalScore.textContent = this.score;
+        }, 1500);
     }
 };
 

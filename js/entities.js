@@ -228,8 +228,8 @@ class Goat {
         this.wobble = 0;
     }
 
-    jump(intensity) {
-        if (this.isGrounded) {
+    jump(intensity, force = false) {
+        if (this.isGrounded || force) {
             // Base jump + intensity bonus
             const jumpPower = -8 - (intensity * 6);
             this.velocityY = jumpPower;
