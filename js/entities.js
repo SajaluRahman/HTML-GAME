@@ -59,13 +59,24 @@ class Platform {
 
             // 30% chance to spawn humans on a platform
             if (Math.random() > 0.7) {
-                // Spawn 1 to 3 humans
-                const numHumans = Math.floor(Math.random() * 3) + 1;
+                // Spawn 1 to 3 humans, but ensure no repeats
+                const maxHumans = Math.min(3, humanSources.length);
+                const numHumans = Math.floor(Math.random() * maxHumans) + 1;
+
+                // Track available indices to prevent duplicates
+                let availableTypes = [];
+                for (let i = 0; i < humanSources.length; i++) {
+                    availableTypes.push(i);
+                }
+
                 for (let j = 0; j < numHumans; j++) {
                     const humanX = 30 + Math.random() * (width - 60);
                     const facingRight = Math.random() > 0.5;
-                    // Pick a random human index (0-3)
-                    const humanType = Math.floor(Math.random() * humanSources.length);
+
+                    // Pick a random human index and remove it from available pool
+                    const randomIndex = Math.floor(Math.random() * availableTypes.length);
+                    const humanType = availableTypes.splice(randomIndex, 1)[0];
+
                     // Scale some randomly
                     const hScale = 0.8 + Math.random() * 0.4;
 
@@ -86,7 +97,7 @@ class Platform {
                 for (let c = 0; c < numCoins; c++) {
                     // Slight arc: calculate Y offset based on distance from middle
                     const cX = startX + (c * 50);
-                    const hover = 60 + Math.sin(c * 1) * 40; // Float above ground 60-100px
+                    const hover = 30 + Math.sin(c * 1) * 15; // Lower hover so it touches the grass
                     this.coins.push({
                         xOffset: cX,
                         yOffset: hover,
@@ -103,7 +114,7 @@ class Platform {
                 const mineX = 50 + Math.random() * (width - 100);
                 this.mines.push({
                     xOffset: mineX,
-                    yOffset: 55, // Sitting on the grass (slightly buried since height is 70)
+                    yOffset: 30, // Sit lower into the grass
                     width: 70,
                     height: 70,
                     hit: false
@@ -125,7 +136,7 @@ class Platform {
                 const tWidth = 200 * tree.scale;
                 const tHeight = 250 * tree.scale;
                 const tX = this.x + tree.xOffset;
-                const tY = this.y - tHeight + 20; // Anchor it slightly deep into the grass
+                const tY = this.y - tHeight + 50; // Push down substantially deeper so roots don't float
 
                 ctx.drawImage(treeImage, tX, tY, tWidth, tHeight);
             }
@@ -140,7 +151,7 @@ class Platform {
                 const fWidth = 90 * human.scale;
                 const fHeight = 110 * human.scale;
                 const fX = this.x + human.xOffset;
-                const fY = this.y - fHeight + 15; // Anchor on grass
+                const fY = this.y - fHeight + 35; // Push down deeper into grass so feet don't float
 
                 ctx.save();
                 if (!human.facingRight) {
