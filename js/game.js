@@ -160,20 +160,29 @@ const Game = {
         // Base state: don't move unless making sound
         this.gameSpeed = 0;
 
-        // Only trigger movement if vocalizing
+        // Jump mechanics based on Pitch
         if (voiceData.isVocalizing) {
 
-            // Movement speed based slightly on volume to make it feel responsive, but fixed base
-            this.gameSpeed = this.baseSpeed + (voiceData.normalizedVolume * 2);
+            // Move forward when vocalizing
+            this.gameSpeed = this.baseSpeed;
 
-            // Determine Jump based on Pitch
-            // Assuming low pitch < 200, high pitch > 200 (tuneable)
             if (this.goat.isGrounded) {
-                if (voiceData.pitch > 250) {
-                    // High Pitch -> Jump! Intensity scales with pitch difference
-                    let intensity = Math.min((voiceData.pitch - 250) / 400, 1.0);
-                    this.goat.jump(intensity);
-                }
+                // Map pitch to jump intensity. 
+                // e.g., low hum (~100Hz) = small jump (0.1)
+                // high squeak (~500Hz) = big jump (1.0)
+                const minPitch = 80;
+                const maxPitch = 500;
+
+                let pitchRange = Math.max(0, voiceData.pitch - minPitch);
+                let intensity = Math.min(pitchRange / (maxPitch - minPitch), 1.0);
+
+                // Give a little boost to the minimum jump so a low sound still hops
+                intensity = Math.max(0.2, intensity);
+
+                // Scale down overall jump height slightly as requested
+                intensity = intensity * 0.8;
+
+                this.goat.jump(intensity);
             }
         }
 

@@ -5,11 +5,11 @@ const MediaHandler = {
     async requestPermissions() {
         try {
             const constraints = {
-                video: { facingMode: "environment" },
+                video: { facingMode: "user" },
                 audio: true
             };
 
-            // Try with environment (back) camera first
+            // Try with user (front) camera first
             try {
                 this.stream = await navigator.mediaDevices.getUserMedia(constraints);
             } catch (e) {
