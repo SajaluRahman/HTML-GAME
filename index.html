@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Goat Jump Voice Challenge</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app-container">
+        <!-- Background Camera Feed -->
+        <video id="bg-camera" autoplay playsinline muted></video>
+
+        <!-- Game Canvas -->
+        <canvas id="game-canvas"></canvas>
+
+        <!-- UI Overlay container -->
+        <div id="ui-layer">
+
+            <!-- Start Screen -->
+            <div id="start-screen" class="screen active">
+                <h1>Goat Jump Voice Challenge</h1>
+                <p>🗣️ Make a sound to move! 🐐</p>
+                <p>Low Pitch = Walk forward<br>High Pitch = BIG JUMP!</p>
+                <button id="start-btn">Allow Mic & Camera to Start</button>
+                <p class="error-msg" id="start-error"></p>
+            </div>
+
+            <!-- In-Game UI -->
+            <div id="hud-screen" class="screen">
+                <div class="score-board">Score: <span id="score-val">0</span></div>
+                <div class="voice-meter-container">
+                    <div class="voice-meter-bg">
+                        <div id="voice-meter-fill"></div>
+                    </div>
+                    <div class="voice-meter-label">Pitch</div>
+                </div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="game-over-screen" class="screen">
+                <h2>Game Over! 🐐</h2>
+                <p>Score: <span id="final-score">0</span></p>
+                <button id="restart-btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audioAnalyzer.js"></script>
+    <script src="js/media.js"></script>
+    <script src="js/sfx.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>
