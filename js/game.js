@@ -113,6 +113,7 @@ const Game = {
 
         this.score = 0;
         this.distanceTraveled = 0;
+        this.bonusScore = 0; // Added for coins
         this.gameSpeed = this.baseSpeed;
         this.isGameOver = false;
         this.isRunning = true;
@@ -166,24 +167,26 @@ const Game = {
             // Move forward when vocalizing
             this.gameSpeed = this.baseSpeed;
 
-            if (this.goat.isGrounded) {
+            // Allow jump only if grounded AND we haven't already jumped during this sound burst
+            if (this.goat.isGrounded && !this.goat.hasJumpedThisBurst) {
                 // Map pitch to jump intensity. 
                 // e.g., low hum (~100Hz) = small jump (0.1)
                 // high squeak (~500Hz) = big jump (1.0)
                 const minPitch = 80;
-                const maxPitch = 500;
+                const maxPitch = 800; // Increased max threshold for "very very high" pitch
 
                 let pitchRange = Math.max(0, voiceData.pitch - minPitch);
                 let intensity = Math.min(pitchRange / (maxPitch - minPitch), 1.0);
 
-                // Give a little boost to the minimum jump so a low sound still hops
-                intensity = Math.max(0.2, intensity);
-
-                // Scale down overall jump height slightly as requested
-                intensity = intensity * 0.8;
+                // Allow intensity to scale up to 1.5x for massive jumps, but floor at 0.2 for tiny hops
+                intensity = Math.max(0.2, intensity * 1.5);
 
                 this.goat.jump(intensity);
+                this.goat.hasJumpedThisBurst = true; // Block further jumps until sound stops
             }
+        } else {
+            // Sound stopped, reset the jump burst blocker so we can jump again next time
+            this.goat.hasJumpedThisBurst = false;
         }
 
         this.goat.update(deltaTime, voiceData);
@@ -191,7 +194,11 @@ const Game = {
         // Reset grounded state for collision checking
         this.goat.isGrounded = false;
 
-        // Useful goat bounds
+        // Useful goat bounds (tighter hitbox for fairness since sprite is 150x150)
+        const gX = this.goat.x + 40;
+        const gY = this.goat.y + 40;
+        const gW = this.goat.width - 80;
+        const gH = this.goat.height - 40; // less off the bottom for ground checks
         const goatBottom = this.goat.y + this.goat.height;
         const goatRight = this.goat.x + this.goat.width;
 
@@ -203,14 +210,46 @@ const Game = {
             // Only land on platform if moving downwards or horizontal
             if (this.goat.velocityY >= 0) {
                 // Generous bounding box X collision (forgiving for player)
-                if (goatRight - 15 > plat.x && this.goat.x + 15 < plat.x + plat.width) {
+                if (goatRight - 30 > plat.x && this.goat.x + 30 < plat.x + plat.width) {
                     // Check Y axis: If goat bottom is near platform top, snap to it
                     // The 20px threshold covers fast falls in a single frame
                     if (goatBottom >= plat.y && goatBottom - this.goat.velocityY * (deltaTime / 16) <= plat.y + 20) {
                         this.goat.isGrounded = true;
                         this.goat.y = plat.y - this.goat.height;
                         this.goat.velocityY = 0;
-                        break;
+                    }
+                }
+            }
+
+            // Check Coins
+            for (let c of plat.coins) {
+                if (!c.collected) {
+                    const cX = plat.x + c.xOffset;
+                    const cY = plat.y - c.yOffset;
+                    // AABB collision
+                    if (gX < cX + c.width && gX + gW > cX &&
+                        gY < cY + c.height && gY + gH > cY) {
+                        c.collected = true;
+                        this.bonusScore += 2; // Points per coin
+                    }
+                }
+            }
+
+            // Check Mines
+            for (let m of plat.mines) {
+                if (!m.hit) {
+                    const mX = plat.x + m.xOffset;
+                    const mY = plat.y - m.yOffset;
+                    // Tighter AABB for mines to be fair
+                    const mHitX = mX + 10;
+                    const mHitY = mY + 10;
+                    const mHitW = m.width - 20;
+                    const mHitH = m.height - 20;
+
+                    if (gX < mHitX + mHitW && gX + gW > mHitX &&
+                        gY < mHitY + mHitH && gY + gH > mHitY) {
+                        m.hit = true;
+                        this.die(); // Eliminate goat
                     }
                 }
             }
@@ -226,9 +265,9 @@ const Game = {
             this.spawnPlatform();
         }
 
-        // Scoring based on distance
+        // Scoring based on distance + bonus
         this.distanceTraveled += this.gameSpeed * (deltaTime / 16);
-        this.score = Math.floor(this.distanceTraveled / 60);
+        this.score = Math.floor(this.distanceTraveled / 60) + (this.bonusScore || 0);
         this.scoreVal.textContent = this.score;
 
         // Dead? (Fell off screen)
