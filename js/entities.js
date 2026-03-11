@@ -53,6 +53,8 @@ class Platform {
 
         // Only put trees/farmers/hazards on reasonably wide platforms
         if (width > 150) {
+            let occupiedRegions = []; // Store {start, end} to prevent overlaps
+
             const maxTrees = Math.min(2, treeSources.length);
             const numTrees = Math.floor(Math.random() * maxTrees) + 1; // 1 to 2 trees
             // Track available indices to prevent duplicates
@@ -62,26 +64,50 @@ class Platform {
             }
 
             for (let i = 0; i < numTrees; i++) {
-                const treeScale = 0.6 + Math.random() * 0.4; // 0.6 to 1.0 scale
+                const treeScale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 scale (Taller)
                 const tWidth = 200 * treeScale;
+                const hitWidth = tWidth * 0.6; // We only care about the core trunk overlapping
 
-                // Keep trees strictly within the platform bounds
                 let treeX = 10;
-                if (tWidth >= width) {
-                    treeX = (width - tWidth) / 2; // Center horizontally if it's wider than the platform
-                } else {
-                    const maxTreeX = width - tWidth - 10;
-                    treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
+                let placed = false;
+
+                // Try to find a non-overlapping spot
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    if (tWidth >= width) {
+                        treeX = (width - tWidth) / 2; // Center horizontally if it's wider than the platform
+                    } else {
+                        const maxTreeX = width - tWidth - 10;
+                        treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
+                    }
+
+                    let coreStart = treeX + (tWidth - hitWidth) / 2;
+                    let coreEnd = coreStart + hitWidth;
+                    let overlap = false;
+
+                    for (let region of occupiedRegions) {
+                        if (!(coreEnd < region.start || coreStart > region.end)) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+
+                    if (!overlap) {
+                        placed = true;
+                        occupiedRegions.push({ start: coreStart, end: coreEnd });
+                        break;
+                    }
                 }
 
-                const randomIndex = Math.floor(Math.random() * availableTrees.length);
-                const treeType = availableTrees.splice(randomIndex, 1)[0];
+                if (placed) {
+                    const randomIndex = Math.floor(Math.random() * availableTrees.length);
+                    const treeType = availableTrees.splice(randomIndex, 1)[0];
 
-                this.trees.push({
-                    xOffset: treeX,
-                    scale: treeScale,
-                    typeIndex: treeType
-                });
+                    this.trees.push({
+                        xOffset: treeX,
+                        scale: treeScale,
+                        typeIndex: treeType
+                    });
+                }
             }
 
             // 30% chance to spawn humans on a platform
@@ -100,27 +126,47 @@ class Platform {
                     const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
                     const fWidth = 90 * hScale;
 
-                    // Keep humans strictly within the platform bounds
                     let humanX = 10;
-                    if (fWidth >= width) {
-                        humanX = (width - fWidth) / 2;
-                    } else {
-                        const maxHumanX = width - fWidth - 10;
-                        humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
+                    let placed = false;
+
+                    // Try to find a non-overlapping spot
+                    for (let attempt = 0; attempt < 5; attempt++) {
+                        if (fWidth >= width) {
+                            humanX = (width - fWidth) / 2;
+                        } else {
+                            const maxHumanX = width - fWidth - 10;
+                            humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
+                        }
+
+                        let overlap = false;
+                        for (let region of occupiedRegions) {
+                            if (!(humanX + fWidth < region.start || humanX > region.end)) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+
+                        if (!overlap) {
+                            placed = true;
+                            occupiedRegions.push({ start: humanX, end: humanX + fWidth });
+                            break;
+                        }
                     }
 
-                    const facingRight = Math.random() > 0.5;
+                    if (placed) {
+                        const facingRight = Math.random() > 0.5;
 
-                    // Pick a random human index and remove it from available pool
-                    const randomIndex = Math.floor(Math.random() * availableTypes.length);
-                    const humanType = availableTypes.splice(randomIndex, 1)[0];
+                        // Pick a random human index and remove it from available pool
+                        const randomIndex = Math.floor(Math.random() * availableTypes.length);
+                        const humanType = availableTypes.splice(randomIndex, 1)[0];
 
-                    this.farmers.push({
-                        xOffset: humanX,
-                        facingRight: facingRight,
-                        typeIndex: humanType,
-                        scale: hScale
-                    });
+                        this.farmers.push({
+                            xOffset: humanX,
+                            facingRight: facingRight,
+                            typeIndex: humanType,
+                            scale: hScale
+                        });
+                    }
                 }
             }
 
@@ -191,7 +237,7 @@ class Platform {
 
                 // Tree original size assume ~120x160 from generator
                 const tWidth = 200 * tree.scale;
-                const tHeight = 250 * tree.scale;
+                const tHeight = 320 * tree.scale; // Increased base height significantly
                 const tX = this.x + tree.xOffset;
                 // Move tree to surface and push down +40px to bury roots/transparent margin
                 const tY = this.y - tHeight + 40;
