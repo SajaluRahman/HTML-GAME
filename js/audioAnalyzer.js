@@ -12,6 +12,9 @@ const VoiceAnalyzer = {
     startTime: 0,
     pitch: 0,
 
+    // Audio stream for MediaRecorder
+    mediaStreamDestination: null,
+
     // Thresholds
     noiseGate: 12, // Must be loud enough to trigger jump (ignores background noise)
     maxVolume: 120, // Volume at which it is considered a full 1.0/100% effort
@@ -26,7 +29,12 @@ const VoiceAnalyzer = {
 
         this.source = this.audioContext.createMediaStreamSource(audioStream);
         this.source.connect(this.analyser);
-        // Do NOT connect source to destination! That would result in speaker feedback.
+
+        // Create a destination node for MediaRecorder and send the mic audio to it
+        this.mediaStreamDestination = this.audioContext.createMediaStreamDestination();
+        this.source.connect(this.mediaStreamDestination);
+
+        // Do NOT connect source to audioContext.destination! That would result in speaker feedback.
 
         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
     },

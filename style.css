@@ -243,3 +243,35 @@ button:active {
     background: linear-gradient(to top, #4CAF50, #FFEB3B, #F44336);
     transition: height 0.05s ease-out;
 }
+
+/* Screenshot & Share UI */
+#screenshot-actions {
+    margin-top: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 15px;
+}
+
+#screenshot-btn {
+    background: linear-gradient(135deg, #2196F3, #1565C0);
+    margin-bottom: 0;
+}
+
+.share-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.share-actions button {
+    flex: 1;
+    font-size: 16px;
+    padding: 10px;
+}
+
+#save-screenshot-btn {
+    background: linear-gradient(135deg, #009688, #00695C);
+}
+
+#share-screenshot-btn {
+    background: linear-gradient(135deg, #FF9800, #E65100);
+}

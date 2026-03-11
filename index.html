@@ -30,12 +30,21 @@
 
             <!-- In-Game UI -->
             <div id="hud-screen" class="screen">
-                <div class="score-board">Score: <span id="score-val">0</span></div>
-                <div class="voice-meter-container">
-                    <div class="voice-meter-bg">
-                        <div id="voice-meter-fill"></div>
+                <div style="display: flex; justify-content: space-between; width: 100%; padding: 20px;">
+                    <div class="voice-meter-container" style="position: relative; top: 0; left: 0;">
+                        <div class="voice-meter-bg">
+                            <div id="voice-meter-fill"></div>
+                        </div>
+                        <div class="voice-meter-label">Pitch</div>
                     </div>
-                    <div class="voice-meter-label">Pitch</div>
+
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                        <div class="score-board" style="position: relative; top: 0; right: 0;">Score: <span
+                                id="score-val">0</span></div>
+                        <button id="record-btn"
+                            style="background: linear-gradient(135deg, #e53935, #b71c1c); padding: 10px 15px; font-size: 14px; width: auto; border-radius: 20px;">⏺
+                            Record</button>
+                    </div>
                 </div>
             </div>
 
@@ -43,7 +52,20 @@
             <div id="game-over-screen" class="screen">
                 <h2>Game Over! 🐐</h2>
                 <p>Score: <span id="final-score">0</span></p>
-                <button id="restart-btn">Play Again</button>
+
+                <div id="screenshot-actions">
+                    <button id="screenshot-btn">📸 Take Screenshot</button>
+                    <div id="screenshot-preview-container" style="display: none; margin-top: 10px;">
+                        <img id="screenshot-preview" src="" alt="Screenshot Preview"
+                            style="max-width: 100%; border-radius: 10px; border: 2px solid white; margin-bottom: 10px;">
+                        <div class="share-actions">
+                            <button id="save-screenshot-btn">💾 Save</button>
+                            <button id="share-screenshot-btn">📤 Share</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="restart-btn" style="margin-top: 20px;">Play Again</button>
             </div>
         </div>
     </div>

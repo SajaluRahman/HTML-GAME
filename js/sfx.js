@@ -1,10 +1,10 @@
 const SFX = {
     ctx: null,
+    recordingDestination: null,
 
-    init() {
-        if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+    init(context, destination) {
+        this.ctx = context;
+        this.recordingDestination = destination;
     },
 
     playJump(intensity) {
@@ -15,7 +15,10 @@ const SFX = {
         const gainNode = this.ctx.createGain();
 
         osc.connect(gainNode);
-        gainNode.connect(this.ctx.destination);
+        gainNode.connect(this.ctx.destination); // Play to speakers
+        if (this.recordingDestination) {
+            gainNode.connect(this.recordingDestination); // Pipe to recordings
+        }
 
         osc.type = 'sine';
 
@@ -46,7 +49,10 @@ const SFX = {
         const gainNode = this.ctx.createGain();
 
         osc.connect(gainNode);
-        gainNode.connect(this.ctx.destination);
+        gainNode.connect(this.ctx.destination); // Play to speakers
+        if (this.recordingDestination) {
+            gainNode.connect(this.recordingDestination); // Pipe to recordings
+        }
 
         osc.type = 'sawtooth';
 

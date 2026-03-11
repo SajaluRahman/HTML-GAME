@@ -1,7 +1,14 @@
-const treeImage = new Image();
-treeImage.src = 'assets/coconut_tree2.png';
-let treeImageLoaded = false;
-treeImage.onload = () => { treeImageLoaded = true; };
+// Load all tree varieties
+const treeImages = [];
+const treeSources = ['assets/coconut_tree2.png', 'assets/tree_mango4.png', 'assets/tree_banana2.png', 'assets/tree_jackfruit3.png', 'assets/tree_rubber2.png', 'assets/tree_flag2.png'];
+let loadedTrees = 0;
+
+for (let i = 0; i < treeSources.length; i++) {
+    const img = new Image();
+    img.src = treeSources[i];
+    img.onload = () => { loadedTrees++; };
+    treeImages.push(img);
+}
 
 // Load all human varieties
 const humanImages = [];
@@ -46,14 +53,34 @@ class Platform {
 
         // Only put trees/farmers/hazards on reasonably wide platforms
         if (width > 150) {
-            const numTrees = Math.floor(Math.random() * 2) + 1; // 1 to 2 trees
+            const maxTrees = Math.min(2, treeSources.length);
+            const numTrees = Math.floor(Math.random() * maxTrees) + 1; // 1 to 2 trees
+            // Track available indices to prevent duplicates
+            let availableTrees = [];
+            for (let i = 0; i < treeSources.length; i++) {
+                availableTrees.push(i);
+            }
+
             for (let i = 0; i < numTrees; i++) {
-                // Keep trees away from the very edges
-                const treeX = 20 + Math.random() * (width - 60);
                 const treeScale = 0.6 + Math.random() * 0.4; // 0.6 to 1.0 scale
+                const tWidth = 200 * treeScale;
+
+                // Keep trees strictly within the platform bounds
+                let treeX = 10;
+                if (tWidth >= width) {
+                    treeX = (width - tWidth) / 2; // Center horizontally if it's wider than the platform
+                } else {
+                    const maxTreeX = width - tWidth - 10;
+                    treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
+                }
+
+                const randomIndex = Math.floor(Math.random() * availableTrees.length);
+                const treeType = availableTrees.splice(randomIndex, 1)[0];
+
                 this.trees.push({
                     xOffset: treeX,
-                    scale: treeScale
+                    scale: treeScale,
+                    typeIndex: treeType
                 });
             }
 
@@ -70,15 +97,23 @@ class Platform {
                 }
 
                 for (let j = 0; j < numHumans; j++) {
-                    const humanX = 30 + Math.random() * (width - 60);
+                    const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
+                    const fWidth = 90 * hScale;
+
+                    // Keep humans strictly within the platform bounds
+                    let humanX = 10;
+                    if (fWidth >= width) {
+                        humanX = (width - fWidth) / 2;
+                    } else {
+                        const maxHumanX = width - fWidth - 10;
+                        humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
+                    }
+
                     const facingRight = Math.random() > 0.5;
 
                     // Pick a random human index and remove it from available pool
                     const randomIndex = Math.floor(Math.random() * availableTypes.length);
                     const humanType = availableTypes.splice(randomIndex, 1)[0];
-
-                    // Scale some randomly
-                    const hScale = 0.8 + Math.random() * 0.4;
 
                     this.farmers.push({
                         xOffset: humanX,
@@ -129,43 +164,6 @@ class Platform {
     }
 
     draw(ctx) {
-        // Draw background elements (Trees) first so goat/grass is in front
-        if (treeImageLoaded) {
-            for (const tree of this.trees) {
-                // Tree original size assume ~120x160 from generator
-                const tWidth = 200 * tree.scale;
-                const tHeight = 250 * tree.scale;
-                const tX = this.x + tree.xOffset;
-                const tY = this.y - tHeight + 50; // Push down substantially deeper so roots don't float
-
-                ctx.drawImage(treeImage, tX, tY, tWidth, tHeight);
-            }
-        }
-
-        // Draw humans if any are loaded
-        if (loadedHumans > 0) {
-            for (const human of this.farmers) {
-                const img = humanImages[human.typeIndex];
-                if (!img) continue; // Skip if this specific image isn't loaded yet
-
-                const fWidth = 90 * human.scale;
-                const fHeight = 110 * human.scale;
-                const fX = this.x + human.xOffset;
-                const fY = this.y - fHeight + 35; // Push down deeper into grass so feet don't float
-
-                ctx.save();
-                if (!human.facingRight) {
-                    // Flip image horizontally
-                    ctx.translate(fX + fWidth, fY);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(img, 0, 0, fWidth, fHeight);
-                } else {
-                    ctx.drawImage(img, fX, fY, fWidth, fHeight);
-                }
-                ctx.restore();
-            }
-        }
-
         // Main block (Dirt/Soil)
         ctx.fillStyle = this.color;
         ctx.beginPath();
@@ -185,6 +183,48 @@ class Platform {
         ctx.fillStyle = '#689F38'; // Occasional light patch
         ctx.fillRect(this.x + this.width * 0.3, this.y, this.width * 0.4, 8);
 
+        // Draw background elements (Trees) first so goat/grass is in front
+        if (loadedTrees > 0) {
+            for (const tree of this.trees) {
+                const img = treeImages[tree.typeIndex];
+                if (!img) continue; // Skip if this specific image isn't loaded yet
+
+                // Tree original size assume ~120x160 from generator
+                const tWidth = 200 * tree.scale;
+                const tHeight = 250 * tree.scale;
+                const tX = this.x + tree.xOffset;
+                // Move tree to surface and push down +40px to bury roots/transparent margin
+                const tY = this.y - tHeight + 40;
+
+                ctx.drawImage(img, tX, tY, tWidth, tHeight);
+            }
+        }
+
+        // Draw humans if any are loaded
+        if (loadedHumans > 0) {
+            for (const human of this.farmers) {
+                const img = humanImages[human.typeIndex];
+                if (!img) continue; // Skip if this specific image isn't loaded yet
+
+                const fWidth = 90 * human.scale;
+                const fHeight = 110 * human.scale;
+                const fX = this.x + human.xOffset;
+                // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
+                const fY = this.y - fHeight + 20;
+
+                ctx.save();
+                if (!human.facingRight) {
+                    // Flip image horizontally
+                    ctx.translate(fX + fWidth, fY);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(img, 0, 0, fWidth, fHeight);
+                } else {
+                    ctx.drawImage(img, fX, fY, fWidth, fHeight);
+                }
+                ctx.restore();
+            }
+        }
+        // (Removed duplicate grass detail overlay)
         // Draw Coins
         if (coinImageLoaded) {
             for (let i = 0; i < this.coins.length; i++) {

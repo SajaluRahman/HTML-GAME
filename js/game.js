@@ -24,6 +24,11 @@ const Game = {
     scoreVal: null,
     finalScore: null,
 
+    // Recording & Screenshot
+    mediaRecorder: null,
+    recordedChunks: [],
+    recordStream: null,
+
     init() {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
@@ -41,6 +46,12 @@ const Game = {
         // Bind buttons
         document.getElementById('start-btn').addEventListener('click', () => this.startGainingPermissions());
         document.getElementById('restart-btn').addEventListener('click', () => this.resetGame());
+
+        // Screenshot & Recording Actions
+        document.getElementById('screenshot-btn').addEventListener('click', () => this.takeScreenshot());
+        document.getElementById('save-screenshot-btn').addEventListener('click', () => this.saveScreenshot());
+        document.getElementById('share-screenshot-btn').addEventListener('click', () => this.shareScreenshot());
+        document.getElementById('record-btn').addEventListener('click', (e) => this.toggleRecording(e.target));
     },
 
     resize() {
@@ -57,7 +68,7 @@ const Game = {
         const success = await MediaHandler.requestPermissions();
         if (success) {
             // Must init audio context here on user interaction
-            SFX.init();
+            SFX.init(VoiceAnalyzer.audioContext, VoiceAnalyzer.mediaStreamDestination);
             this.startScreen.classList.remove('active');
             this.resetGame();
         } else {
@@ -131,8 +142,76 @@ const Game = {
             this.spawnPlatform();
         }
 
+        // Hide screenshot preview cleanly
+        document.getElementById('screenshot-preview-container').style.display = 'none';
+        document.getElementById('screenshot-btn').style.display = 'inline-block';
+
+        // Reset record button state
+        const recordBtn = document.getElementById('record-btn');
+        recordBtn.textContent = '⏺ Record';
+        recordBtn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)';
+
         this.lastTime = performance.now();
         requestAnimationFrame((time) => this.loop(time));
+    },
+
+    toggleRecording(btn) {
+        if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
+            // Stop recording
+            this.mediaRecorder.stop();
+            btn.textContent = '⏺ Record';
+            btn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)'; // Red
+        } else {
+            // Start recording
+            this.recordedChunks = [];
+            btn.textContent = '⏹ Stop Recording';
+            btn.style.background = 'linear-gradient(135deg, #43a047, #1b5e20)'; // Green
+            this.startRecording();
+        }
+    },
+
+    startRecording() {
+        try {
+            const canvasStream = this.canvas.captureStream(30); // 30 FPS
+
+            const tracks = [
+                ...canvasStream.getVideoTracks()
+            ];
+
+            // Add the combined audio track from VoiceAnalyzer (Mic + SFX)
+            if (VoiceAnalyzer.mediaStreamDestination) {
+                tracks.push(...VoiceAnalyzer.mediaStreamDestination.stream.getAudioTracks());
+            }
+
+            const combinedStream = new MediaStream(tracks);
+
+            this.mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+
+            this.mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    this.recordedChunks.push(e.data);
+                }
+            };
+
+            this.mediaRecorder.onstop = () => {
+                const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `goat_jump_gameplay_${Date.now()}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            };
+
+            this.mediaRecorder.start();
+        } catch (e) {
+            console.error("Recording failed or not supported", e);
+        }
     },
 
     loop(currentTime) {
@@ -297,10 +376,14 @@ const Game = {
     },
 
     draw() {
-        // Clear canvas
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // Background is transparent because video sits behind canvas
+        // Draw video background so it gets captured in CanvasStream
+        const video = document.getElementById('bg-camera');
+        if (video.readyState >= video.HAVE_CURRENT_DATA) {
+            // Draw video stretching or fitting to canvas
+            this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
 
         for (let plat of this.platforms) {
             plat.draw(this.ctx);
@@ -350,10 +433,79 @@ const Game = {
             this.isGameOver = true;
             this.isRunning = false;
 
+            // Stop recording
+            if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
+                this.mediaRecorder.stop();
+                const recordBtn = document.getElementById('record-btn');
+                recordBtn.textContent = '⏺ Record';
+                recordBtn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)';
+            }
+
             this.hudScreen.classList.remove('active');
             this.gameOverScreen.classList.add('active');
             this.finalScore.textContent = this.score;
         }, 1500);
+    },
+
+    takeScreenshot() {
+        // Redraw immediately to ensure we have the clean frame
+        this.draw();
+
+        // Imprint the final score and text onto the canvas directly so it gets saved in the image
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        this.ctx.roundRect(this.canvas.width / 2 - 150, this.canvas.height / 2 - 80, 300, 160, 20);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#ffeb3b';
+        this.ctx.font = 'bold 36px "Segoe UI", Tahoma, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`Goat Jump Final Score`, this.canvas.width / 2, this.canvas.height / 2 - 20);
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 48px "Segoe UI", Tahoma, sans-serif';
+        this.ctx.fillText(`${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 40);
+        this.ctx.restore();
+
+        const dataUrl = this.canvas.toDataURL("image/png");
+        document.getElementById('screenshot-preview').src = dataUrl;
+        document.getElementById('screenshot-preview-container').style.display = 'block';
+        document.getElementById('screenshot-btn').style.display = 'none';
+
+        // Redraw one more time to clean the superimposed UI off the live game canvas behind the modal
+        this.draw();
+    },
+
+    saveScreenshot() {
+        const dataUrl = document.getElementById('screenshot-preview').src;
+        if (!dataUrl) return;
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `goat_jump_score_${Date.now()}.png`;
+        a.click();
+    },
+
+    async shareScreenshot() {
+        const dataUrl = document.getElementById('screenshot-preview').src;
+        if (!dataUrl) return;
+
+        try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], `goat_jump_score_${Date.now()}.png`, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'My Goat Jump Score!',
+                    text: `I scored ${this.score} in Goat Jump Voice Challenge! 🐐`,
+                    files: [file]
+                });
+            } else {
+                alert("Sharing files is not supported on this browser/device.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
     }
 };
 
