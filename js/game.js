@@ -379,8 +379,29 @@ const Game = {
         // Draw video background so it gets captured in CanvasStream
         const video = document.getElementById('bg-camera');
         if (video.readyState >= video.HAVE_CURRENT_DATA) {
-            // Draw video stretching or fitting to canvas
-            this.ctx.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+            // Calculate object-fit: cover equivalent for canvas drawing to prevent stretching
+            const videoRatio = video.videoWidth / video.videoHeight;
+            const canvasRatio = this.canvas.width / this.canvas.height;
+            let drawWidth, drawHeight, startX, startY;
+
+            if (videoRatio > canvasRatio) {
+                drawHeight = this.canvas.height;
+                drawWidth = video.videoWidth * (this.canvas.height / video.videoHeight);
+                startX = (this.canvas.width - drawWidth) / 2;
+                startY = 0;
+            } else {
+                drawWidth = this.canvas.width;
+                drawHeight = video.videoHeight * (this.canvas.width / video.videoWidth);
+                startX = 0;
+                startY = (this.canvas.height - drawHeight) / 2;
+            }
+
+            // Mirror the video on the canvas for recording so it matches the live feed
+            this.ctx.save();
+            this.ctx.scale(-1, 1);
+            // Draw video with proper aspect ratio, inverted X to account for scale(-1, 1)
+            this.ctx.drawImage(video, -startX - drawWidth, startY, drawWidth, drawHeight);
+            this.ctx.restore();
         } else {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }

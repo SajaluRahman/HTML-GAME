@@ -4,17 +4,28 @@ const MediaHandler = {
 
     async requestPermissions() {
         try {
+            // Request the best native uncompressed quality by NOT specifying exact dimensions
             const constraints = {
-                video: { facingMode: "user" },
-                audio: true
+                video: {
+                    facingMode: "user"
+                },
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: false, // Keep raw so squeals/pitches track better
+                    autoGainControl: false
+                }
             };
 
             // Try with user (front) camera first
             try {
                 this.stream = await navigator.mediaDevices.getUserMedia(constraints);
             } catch (e) {
-                // Fallback to any camera if environment camera fails (e.g. desktop)
-                this.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                console.warn("Front camera failed, falling back to any camera", e);
+                // Fallback: Any facing mode
+                this.stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
             }
 
             // Set video to background element
