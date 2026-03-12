@@ -46,5 +46,15 @@ const MediaHandler = {
             console.error("Error accessing media devices.", err);
             return false;
         }
+    },
+
+    stopAudio() {
+        if (this.stream) {
+            const audioTracks = this.stream.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.stop();
+                console.log("Microphone track stopped.");
+            });
+        }
     }
 };

@@ -45,7 +45,7 @@ const Game = {
 
         // Bind buttons
         document.getElementById('start-btn').addEventListener('click', () => this.startGainingPermissions());
-        document.getElementById('restart-btn').addEventListener('click', () => this.resetGame());
+        document.getElementById('restart-btn').addEventListener('click', () => this.startGainingPermissions());
 
         // Screenshot & Recording Actions
         document.getElementById('screenshot-btn').addEventListener('click', () => this.takeScreenshot());
@@ -461,6 +461,9 @@ const Game = {
                 recordBtn.textContent = '⏺ Record';
                 recordBtn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)';
             }
+
+            // Turn off Microphone
+            MediaHandler.stopAudio();
 
             this.hudScreen.classList.remove('active');
             this.gameOverScreen.classList.add('active');
