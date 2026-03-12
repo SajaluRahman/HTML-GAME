@@ -51,8 +51,8 @@ class Platform {
         this.coins = [];
         this.mines = [];
 
-        // Only put trees/farmers/hazards on reasonably wide platforms
-        if (width > 150) {
+        // Only put trees/farmers/hazards on most platforms
+        if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
             const maxTrees = Math.min(2, treeSources.length);
@@ -110,10 +110,10 @@ class Platform {
                 }
             }
 
-            // 60% chance to spawn humans on a platform
-            if (Math.random() > 0.4) {
-                // Spawn 1 to 4 humans, but ensure no repeats
-                const maxHumans = Math.min(4, humanSources.length);
+            // 90% chance to spawn humans on a platform
+            if (Math.random() > 0.1) {
+                // Spawn 1 to 5 humans, but ensure no repeats
+                const maxHumans = Math.min(5, humanSources.length);
                 const numHumans = Math.floor(Math.random() * maxHumans) + 1;
 
                 // Track available indices to prevent duplicates
@@ -124,7 +124,7 @@ class Platform {
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
-                    const fWidth = 130 * hScale; // Increased width for overlap check
+                    const fWidth = 160 * hScale; // Increased width for overlap check
 
                     let humanX = 10;
                     let placed = false;
@@ -252,8 +252,8 @@ class Platform {
                 const img = humanImages[human.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                const fWidth = 130 * human.scale;
-                const fHeight = 180 * human.scale;
+                const fWidth = 160 * human.scale;
+                const fHeight = 220 * human.scale;
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 const fY = this.y - fHeight + 20;
