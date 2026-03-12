@@ -110,10 +110,10 @@ class Platform {
                 }
             }
 
-            // 30% chance to spawn humans on a platform
-            if (Math.random() > 0.7) {
-                // Spawn 1 to 3 humans, but ensure no repeats
-                const maxHumans = Math.min(3, humanSources.length);
+            // 60% chance to spawn humans on a platform
+            if (Math.random() > 0.4) {
+                // Spawn 1 to 4 humans, but ensure no repeats
+                const maxHumans = Math.min(4, humanSources.length);
                 const numHumans = Math.floor(Math.random() * maxHumans) + 1;
 
                 // Track available indices to prevent duplicates
@@ -252,8 +252,8 @@ class Platform {
                 const img = humanImages[human.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                const fWidth = 90 * human.scale;
-                const fHeight = 110 * human.scale;
+                const fWidth = 110 * human.scale;
+                const fHeight = 150 * human.scale;
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 const fY = this.y - fHeight + 20;
