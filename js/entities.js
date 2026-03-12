@@ -64,9 +64,9 @@ class Platform {
             }
 
             for (let i = 0; i < numTrees; i++) {
-                const treeScale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 scale (Taller)
-                const tWidth = 200 * treeScale;
-                const hitWidth = tWidth * 0.6; // We only care about the core trunk overlapping
+                const treeScale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 scale
+                const tWidth = 250 * treeScale; // Increased width for larger trees
+                const hitWidth = tWidth * 0.6;
 
                 let treeX = 10;
                 let placed = false;
@@ -124,7 +124,7 @@ class Platform {
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
-                    const fWidth = 160 * hScale; // Increased width for overlap check
+                    const fWidth = 180 * hScale; // Increased width for larger humans
 
                     let humanX = 10;
                     let placed = false;
@@ -235,9 +235,9 @@ class Platform {
                 const img = treeImages[tree.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                // Tree original size assume ~120x160 from generator
-                const tWidth = 200 * tree.scale;
-                const tHeight = 320 * tree.scale; // Increased base height significantly
+                // Tree original size
+                const tWidth = 250 * tree.scale;
+                const tHeight = 450 * tree.scale; // Even taller trees
                 const tX = this.x + tree.xOffset;
                 // Move tree to surface and push down +40px to bury roots/transparent margin
                 const tY = this.y - tHeight + 40;
@@ -252,8 +252,8 @@ class Platform {
                 const img = humanImages[human.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                const fWidth = 160 * human.scale;
-                const fHeight = 220 * human.scale;
+                const fWidth = 180 * human.scale;
+                const fHeight = 300 * human.scale; // Even taller humans
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 const fY = this.y - fHeight + 20;
