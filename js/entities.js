@@ -65,8 +65,8 @@ class Platform {
 
             for (let i = 0; i < numTrees; i++) {
                 const treeScale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 scale
-                const tWidth = 250 * treeScale; // Increased width for larger trees
-                const hitWidth = tWidth * 0.6;
+                const tWidth = 250 * treeScale;
+                const hitWidth = tWidth * 0.4; // Reduced footprint to allow more items nearby
 
                 let treeX = 10;
                 let placed = false;
@@ -110,8 +110,8 @@ class Platform {
                 }
             }
 
-            // 90% chance to spawn humans on a platform
-            if (Math.random() > 0.1) {
+            // 95% chance to spawn humans on a platform
+            if (Math.random() > 0.05) {
                 // Spawn 1 to 5 humans, but ensure no repeats
                 const maxHumans = Math.min(5, humanSources.length);
                 const numHumans = Math.floor(Math.random() * maxHumans) + 1;
@@ -123,14 +123,15 @@ class Platform {
                 }
 
                 for (let j = 0; j < numHumans; j++) {
-                    const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
-                    const fWidth = 180 * hScale; // Increased width for larger humans
+                    const hScale = 0.8 + Math.random() * 0.4;
+                    const fWidth = 180 * hScale;
+                    const hitWidth = fWidth * 0.4;
 
                     let humanX = 10;
                     let placed = false;
 
-                    // Try to find a non-overlapping spot
-                    for (let attempt = 0; attempt < 5; attempt++) {
+                    // Increase attempts to find a spot
+                    for (let attempt = 0; attempt < 20; attempt++) {
                         if (fWidth >= width) {
                             humanX = (width - fWidth) / 2;
                         } else {
@@ -138,9 +139,11 @@ class Platform {
                             humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
                         }
 
+                        let coreStart = humanX + (fWidth - hitWidth) / 2;
+                        let coreEnd = coreStart + hitWidth;
                         let overlap = false;
                         for (let region of occupiedRegions) {
-                            if (!(humanX + fWidth < region.start || humanX > region.end)) {
+                            if (!(coreEnd < region.start || coreStart > region.end)) {
                                 overlap = true;
                                 break;
                             }
@@ -148,7 +151,7 @@ class Platform {
 
                         if (!overlap) {
                             placed = true;
-                            occupiedRegions.push({ start: humanX, end: humanX + fWidth });
+                            occupiedRegions.push({ start: coreStart, end: coreEnd });
                             break;
                         }
                     }
@@ -169,38 +172,38 @@ class Platform {
                     }
                 }
             }
+        }
 
-            // Collectibles: Coins
-            // 60% chance to spawn a line/arc of coins
-            if (Math.random() > 0.4) {
-                const numCoins = Math.floor(Math.random() * 4) + 1;
-                const startX = 20 + Math.random() * (width / 2); // Start somewhere leftish
-                for (let c = 0; c < numCoins; c++) {
-                    // Slight arc: calculate Y offset based on distance from middle
-                    const cX = startX + (c * 50);
-                    const hover = 30 + Math.sin(c * 1) * 15; // Lower hover so it touches the grass
-                    this.coins.push({
-                        xOffset: cX,
-                        yOffset: hover,
-                        width: 40,
-                        height: 40,
-                        collected: false
-                    });
-                }
-            }
-
-            // Hazards: Mines
-            // 30% chance to spawn 1 mine
-            if (Math.random() > 0.7 && this.coins.length === 0) { // Keep away from coin paths mostly
-                const mineX = 50 + Math.random() * (width - 100);
-                this.mines.push({
-                    xOffset: mineX,
-                    yOffset: 30, // Sit lower into the grass
-                    width: 70,
-                    height: 70,
-                    hit: false
+        // Collectibles: Coins
+        // 60% chance to spawn a line/arc of coins
+        if (Math.random() > 0.4) {
+            const numCoins = Math.floor(Math.random() * 4) + 1;
+            const startX = 20 + Math.random() * (width / 2); // Start somewhere leftish
+            for (let c = 0; c < numCoins; c++) {
+                // Slight arc: calculate Y offset based on distance from middle
+                const cX = startX + (c * 50);
+                const hover = 30 + Math.sin(c * 1) * 15; // Lower hover so it touches the grass
+                this.coins.push({
+                    xOffset: cX,
+                    yOffset: hover,
+                    width: 40,
+                    height: 40,
+                    collected: false
                 });
             }
+        }
+
+        // Hazards: Mines
+        // 30% chance to spawn 1 mine
+        if (Math.random() > 0.7 && this.coins.length === 0) { // Keep away from coin paths mostly
+            const mineX = 50 + Math.random() * (width - 100);
+            this.mines.push({
+                xOffset: mineX,
+                yOffset: 30, // Sit lower into the grass
+                width: 70,
+                height: 70,
+                hit: false
+            });
         }
     }
 
