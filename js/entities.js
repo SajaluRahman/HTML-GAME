@@ -124,7 +124,7 @@ class Platform {
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 0.8 + Math.random() * 0.4; // Scale some randomly
-                    const fWidth = 90 * hScale;
+                    const fWidth = 130 * hScale; // Increased width for overlap check
 
                     let humanX = 10;
                     let placed = false;
@@ -252,8 +252,8 @@ class Platform {
                 const img = humanImages[human.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                const fWidth = 110 * human.scale;
-                const fHeight = 150 * human.scale;
+                const fWidth = 130 * human.scale;
+                const fHeight = 180 * human.scale;
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 const fY = this.y - fHeight + 20;
