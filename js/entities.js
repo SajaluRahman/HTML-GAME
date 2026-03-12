@@ -55,30 +55,75 @@ class Platform {
         if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
-            const maxTrees = Math.min(2, treeSources.length);
-            const numTrees = Math.floor(Math.random() * maxTrees) + 1; // 1 to 2 trees
-            // Track available indices to prevent duplicates
-            let availableTrees = [];
-            for (let i = 0; i < treeSources.length; i++) {
-                availableTrees.push(i);
+            // 1. SPAWN HUMANS FIRST (Prioritize visibility as requested)
+            if (Math.random() > 0.05) { // 95% chance
+                // Spawn 2 to 5 humans for high density
+                const numHumans = Math.floor(Math.random() * 4) + 2;
+
+                let availableTypes = [];
+                for (let i = 0; i < humanSources.length; i++) availableTypes.push(i);
+
+                for (let j = 0; j < numHumans; j++) {
+                    const hScale = 0.8 + Math.random() * 0.4;
+                    const fWidth = 180 * hScale;
+                    const hitWidth = fWidth * 0.3; // Very small footprint for easier dense grouping
+
+                    let humanX = 10;
+                    let placed = false;
+
+                    for (let attempt = 0; attempt < 20; attempt++) {
+                        const maxHumanX = width - fWidth - 10;
+                        humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
+
+                        let coreStart = humanX + (fWidth - hitWidth) / 2;
+                        let coreEnd = coreStart + hitWidth;
+                        let overlap = false;
+                        for (let region of occupiedRegions) {
+                            if (!(coreEnd < region.start || coreStart > region.end)) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+
+                        if (!overlap) {
+                            placed = true;
+                            occupiedRegions.push({ start: coreStart, end: coreEnd });
+                            break;
+                        }
+                    }
+
+                    if (placed) {
+                        const facingRight = Math.random() > 0.5;
+                        const randomIndex = Math.floor(Math.random() * availableTypes.length);
+                        const humanType = availableTypes.length > 0 ? availableTypes.splice(randomIndex, 1)[0] : Math.floor(Math.random() * humanSources.length);
+
+                        this.farmers.push({
+                            xOffset: humanX,
+                            facingRight: facingRight,
+                            typeIndex: humanType,
+                            scale: hScale
+                        });
+                    }
+                }
             }
 
+            // 2. SPAWN TREES SECOND
+            const maxTrees = Math.min(2, treeSources.length);
+            const numTrees = Math.floor(Math.random() * maxTrees) + 1; // 1 to 2 trees
+            let availableTrees = [];
+            for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
+
             for (let i = 0; i < numTrees; i++) {
-                const treeScale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2 scale
+                const treeScale = 0.8 + Math.random() * 0.4;
                 const tWidth = 250 * treeScale;
-                const hitWidth = tWidth * 0.4; // Reduced footprint to allow more items nearby
+                const hitWidth = tWidth * 0.4;
 
                 let treeX = 10;
                 let placed = false;
 
-                // Try to find a non-overlapping spot
-                for (let attempt = 0; attempt < 5; attempt++) {
-                    if (tWidth >= width) {
-                        treeX = (width - tWidth) / 2; // Center horizontally if it's wider than the platform
-                    } else {
-                        const maxTreeX = width - tWidth - 10;
-                        treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
-                    }
+                for (let attempt = 0; attempt < 10; attempt++) {
+                    const maxTreeX = width - tWidth - 10;
+                    treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
 
                     let coreStart = treeX + (tWidth - hitWidth) / 2;
                     let coreEnd = coreStart + hitWidth;
@@ -100,76 +145,13 @@ class Platform {
 
                 if (placed) {
                     const randomIndex = Math.floor(Math.random() * availableTrees.length);
-                    const treeType = availableTrees.splice(randomIndex, 1)[0];
+                    const treeType = availableTrees.length > 0 ? availableTrees.splice(randomIndex, 1)[0] : Math.floor(Math.random() * treeSources.length);
 
                     this.trees.push({
                         xOffset: treeX,
                         scale: treeScale,
                         typeIndex: treeType
                     });
-                }
-            }
-
-            // 95% chance to spawn humans on a platform
-            if (Math.random() > 0.05) {
-                // Spawn 1 to 5 humans, but ensure no repeats
-                const maxHumans = Math.min(5, humanSources.length);
-                const numHumans = Math.floor(Math.random() * maxHumans) + 1;
-
-                // Track available indices to prevent duplicates
-                let availableTypes = [];
-                for (let i = 0; i < humanSources.length; i++) {
-                    availableTypes.push(i);
-                }
-
-                for (let j = 0; j < numHumans; j++) {
-                    const hScale = 0.8 + Math.random() * 0.4;
-                    const fWidth = 180 * hScale;
-                    const hitWidth = fWidth * 0.4;
-
-                    let humanX = 10;
-                    let placed = false;
-
-                    // Increase attempts to find a spot
-                    for (let attempt = 0; attempt < 20; attempt++) {
-                        if (fWidth >= width) {
-                            humanX = (width - fWidth) / 2;
-                        } else {
-                            const maxHumanX = width - fWidth - 10;
-                            humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
-                        }
-
-                        let coreStart = humanX + (fWidth - hitWidth) / 2;
-                        let coreEnd = coreStart + hitWidth;
-                        let overlap = false;
-                        for (let region of occupiedRegions) {
-                            if (!(coreEnd < region.start || coreStart > region.end)) {
-                                overlap = true;
-                                break;
-                            }
-                        }
-
-                        if (!overlap) {
-                            placed = true;
-                            occupiedRegions.push({ start: coreStart, end: coreEnd });
-                            break;
-                        }
-                    }
-
-                    if (placed) {
-                        const facingRight = Math.random() > 0.5;
-
-                        // Pick a random human index and remove it from available pool
-                        const randomIndex = Math.floor(Math.random() * availableTypes.length);
-                        const humanType = availableTypes.splice(randomIndex, 1)[0];
-
-                        this.farmers.push({
-                            xOffset: humanX,
-                            facingRight: facingRight,
-                            typeIndex: humanType,
-                            scale: hScale
-                        });
-                    }
                 }
             }
         }
