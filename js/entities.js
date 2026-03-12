@@ -55,10 +55,10 @@ class Platform {
         if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
-            // 1. SPAWN HUMANS FIRST (Prioritize visibility as requested)
-            if (Math.random() > 0.05) { // 95% chance
-                // Spawn 2 to 5 humans for high density
-                const numHumans = Math.floor(Math.random() * 4) + 2;
+            // 1. SPAWN HUMANS (Balanced density)
+            if (Math.random() > 0.1) { // 90% chance
+                // Spawn 1 to 3 humans
+                const numHumans = Math.floor(Math.random() * 3) + 1;
 
                 let availableTypes = [];
                 for (let i = 0; i < humanSources.length; i++) availableTypes.push(i);
@@ -107,9 +107,9 @@ class Platform {
                 }
             }
 
-            // 2. SPAWN TREES SECOND
-            const maxTrees = Math.min(2, treeSources.length);
-            const numTrees = Math.floor(Math.random() * maxTrees) + 1; // 1 to 2 trees
+            // 2. SPAWN TREES (Equal priority)
+            const maxTrees = Math.min(3, treeSources.length);
+            const numTrees = Math.floor(Math.random() * 3) + 1; // 1 to 3 trees
             let availableTrees = [];
             for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
 
@@ -121,7 +121,7 @@ class Platform {
                 let treeX = 10;
                 let placed = false;
 
-                for (let attempt = 0; attempt < 10; attempt++) {
+                for (let attempt = 0; attempt < 20; attempt++) { // Increased attempts
                     const maxTreeX = width - tWidth - 10;
                     treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
 
