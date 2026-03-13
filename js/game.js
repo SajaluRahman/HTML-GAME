@@ -13,6 +13,8 @@ const Game = {
     // Entities
     goat: null,
     platforms: [],
+    humanTypeBag: [],
+    lastHumanType: -1,
 
     // Time tracking
     lastTime: 0,
@@ -120,7 +122,16 @@ const Game = {
         const timeElapsed = (performance.now() - this.gameStartTime) / 1000;
         const allowHumans = timeElapsed > 20;
 
-        const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding, allowHumans);
+        // Determine human types if allowed
+        let humanTypes = [];
+        if (allowHumans && width > 100 && Math.random() > 0.1) {
+            const numHumans = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < numHumans; i++) {
+                humanTypes.push(this.getNextHumanType());
+            }
+        }
+
+        const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding, allowHumans, humanTypes);
         this.platforms.push(plat);
     },
 
@@ -133,6 +144,8 @@ const Game = {
         this.bonusScore = 0; // Added for coins
         this.gameSpeed = this.baseSpeed;
         this.isGameOver = false;
+        this.humanTypeBag = []; // Reset variety bag
+        this.lastHumanType = -1;
         this.isRunning = true;
         this.isDead = false;
         this.particles = [];
@@ -219,6 +232,30 @@ const Game = {
         } catch (e) {
             console.error("Recording failed or not supported", e);
         }
+    },
+
+    getNextHumanType() {
+        if (this.humanTypeBag.length === 0) {
+            // Refill bag with all 5 human indices [0, 1, 2, 3, 4]
+            const available = [0, 1, 2, 3, 4];
+
+            // Randomly shuffle the available indices
+            for (let i = available.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [available[i], available[j]] = [available[j], available[i]];
+            }
+
+            // If the first element of new bag is same as last element picked, swap it with another
+            if (available[0] === this.lastHumanType && available.length > 1) {
+                [available[0], available[1]] = [available[1], available[0]];
+            }
+
+            this.humanTypeBag = available;
+        }
+
+        const nextType = this.humanTypeBag.pop();
+        this.lastHumanType = nextType;
+        return nextType;
     },
 
     loop(currentTime) {

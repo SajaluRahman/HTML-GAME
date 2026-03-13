@@ -34,7 +34,7 @@ let mineImageLoaded = false;
 mineImage.onload = () => { mineImageLoaded = true; };
 
 class Platform {
-    constructor(x, y, width, height, allowHumans = false) {
+    constructor(x, y, width, height, allowHumans = false, humanTypes = []) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -56,12 +56,8 @@ class Platform {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
             // 1. SPAWN HUMANS (Balanced density) - Only if allowed (20s delay)
-            if (allowHumans && Math.random() > 0.1) { // 90% chance
-                // Spawn 1 to 3 humans
-                const numHumans = Math.floor(Math.random() * 3) + 1;
-
-                let availableTypes = [];
-                for (let i = 0; i < humanSources.length; i++) availableTypes.push(i);
+            if (allowHumans && humanTypes.length > 0) {
+                const numHumans = humanTypes.length;
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 1.1;
@@ -94,8 +90,7 @@ class Platform {
 
                     if (placed) {
                         const facingRight = Math.random() > 0.5;
-                        const randomIndex = Math.floor(Math.random() * availableTypes.length);
-                        const humanType = availableTypes.length > 0 ? availableTypes.splice(randomIndex, 1)[0] : Math.floor(Math.random() * humanSources.length);
+                        const humanType = humanTypes[j];
 
                         this.farmers.push({
                             xOffset: humanX,
