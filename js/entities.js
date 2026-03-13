@@ -55,64 +55,7 @@ class Platform {
         if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
-            // 1. SPAWN TREES (Priority placement)
-            if (width > 150) { // Require some width for trees
-                const numTrees = Math.floor(Math.random() * 2) + 1; // 1 to 2 trees
-                let availableTrees = [];
-                for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
-
-                for (let i = 0; i < numTrees; i++) {
-                    const treeScale = 0.7 + Math.random() * 0.3; // Slightly smaller to fit better
-                    const tWidth = 250 * treeScale;
-                    const hitWidth = tWidth * 0.4;
-
-                    let treeX = 10;
-                    let placed = false;
-
-                    // Tighten bounds: tree origin is left edge, assets have some transparency
-                    // We want to ensure the visual trunk/base stays on the platform
-                    const margin = 30;
-                    const maxTreeX = width - tWidth + margin;
-                    const minTreeX = -margin;
-
-                    for (let attempt = 0; attempt < 20; attempt++) {
-                        treeX = minTreeX + Math.random() * Math.max(0, maxTreeX - minTreeX);
-
-                        let coreStart = treeX + (tWidth - hitWidth) / 2;
-                        let coreEnd = coreStart + hitWidth;
-
-                        // Strict check: tree trunk base must be on platform
-                        if (coreStart < 0 || coreEnd > width) continue;
-
-                        let overlap = false;
-                        for (let region of occupiedRegions) {
-                            if (!(coreEnd < region.start || coreStart > region.end)) {
-                                overlap = true;
-                                break;
-                            }
-                        }
-
-                        if (!overlap) {
-                            placed = true;
-                            occupiedRegions.push({ start: coreStart, end: coreEnd });
-                            break;
-                        }
-                    }
-
-                    if (placed) {
-                        const randomIndex = Math.floor(Math.random() * availableTrees.length);
-                        const treeType = availableTrees.length > 0 ? availableTrees.splice(randomIndex, 1)[0] : Math.floor(Math.random() * treeSources.length);
-
-                        this.trees.push({
-                            xOffset: treeX,
-                            scale: treeScale,
-                            typeIndex: treeType
-                        });
-                    }
-                }
-            }
-
-            // 2. SPAWN HUMANS (Gap filler) - Only if allowed (20s delay)
+            // 1. SPAWN HUMANS (Priority placement) - Only if allowed (20s delay)
             if (allowHumans && humanTypes.length > 0) {
                 const numHumans = Math.min(humanTypes.length, 2); // Cap at 2
 
@@ -158,6 +101,66 @@ class Platform {
                             facingRight: facingRight,
                             typeIndex: humanType,
                             scale: hScale
+                        });
+                    }
+                }
+            }
+
+            // 2. SPAWN TREES (Secondary placement)
+            // If humans are present, trees are rarer (max 1)
+            const humanPresent = this.farmers.length > 0;
+            const treeChance = allowHumans ? (humanPresent ? 0.3 : 0.6) : 0.9;
+
+            if (width > 120 && Math.random() < treeChance) {
+                const maxTrees = humanPresent ? 1 : 2;
+                const numTrees = Math.floor(Math.random() * maxTrees) + 1;
+
+                let availableTrees = [];
+                for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
+
+                for (let i = 0; i < numTrees; i++) {
+                    const treeScale = 0.7 + Math.random() * 0.3;
+                    const tWidth = 250 * treeScale;
+                    const hitWidth = tWidth * 0.4;
+
+                    let treeX = 10;
+                    let placed = false;
+
+                    const margin = 30;
+                    const maxTreeX = width - tWidth + margin;
+                    const minTreeX = -margin;
+
+                    for (let attempt = 0; attempt < 20; attempt++) {
+                        treeX = minTreeX + Math.random() * Math.max(0, maxTreeX - minTreeX);
+
+                        let coreStart = treeX + (tWidth - hitWidth) / 2;
+                        let coreEnd = coreStart + hitWidth;
+
+                        if (coreStart < 0 || coreEnd > width) continue;
+
+                        let overlap = false;
+                        for (let region of occupiedRegions) {
+                            if (!(coreEnd < region.start || coreStart > region.end)) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+
+                        if (!overlap) {
+                            placed = true;
+                            occupiedRegions.push({ start: coreStart, end: coreEnd });
+                            break;
+                        }
+                    }
+
+                    if (placed) {
+                        const randomIndex = Math.floor(Math.random() * availableTrees.length);
+                        const treeType = availableTrees.length > 0 ? availableTrees.splice(randomIndex, 1)[0] : Math.floor(Math.random() * treeSources.length);
+
+                        this.trees.push({
+                            xOffset: treeX,
+                            scale: treeScale,
+                            typeIndex: treeType
                         });
                     }
                 }
