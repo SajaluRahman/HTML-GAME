@@ -172,6 +172,7 @@ const Game = {
 
         this.lastTime = performance.now();
         this.gameStartTime = performance.now();
+        SFX.startBGM();
         requestAnimationFrame((time) => this.loop(time));
     },
 
@@ -478,6 +479,7 @@ const Game = {
         this.isDead = true;
         this.gameSpeed = 0;
         SFX.playGameOver();
+        SFX.stopBGM();
 
         // Spawn firework particles
         this.particles = [];

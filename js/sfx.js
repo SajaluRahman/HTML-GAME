@@ -1,10 +1,37 @@
 const SFX = {
     ctx: null,
     recordingDestination: null,
+    bgm: null,
+    bgmSource: null,
 
     init(context, destination) {
         this.ctx = context;
         this.recordingDestination = destination;
+
+        // Initialize BGM
+        this.bgm = new Audio('assets/audio.mpeg');
+        this.bgm.loop = true;
+
+        if (this.ctx) {
+            this.bgmSource = this.ctx.createMediaElementSource(this.bgm);
+            this.bgmSource.connect(this.ctx.destination);
+            if (this.recordingDestination) {
+                this.bgmSource.connect(this.recordingDestination);
+            }
+        }
+    },
+
+    startBGM() {
+        if (!this.bgm) return;
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        this.bgm.currentTime = 0;
+        this.bgm.play().catch(e => console.error("BGM play failed:", e));
+    },
+
+    stopBGM() {
+        if (!this.bgm) return;
+        this.bgm.pause();
+        this.bgm.currentTime = 0;
     },
 
     playJump(intensity) {
