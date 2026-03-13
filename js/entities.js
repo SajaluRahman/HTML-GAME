@@ -64,7 +64,7 @@ class Platform {
                 for (let i = 0; i < humanSources.length; i++) availableTypes.push(i);
 
                 for (let j = 0; j < numHumans; j++) {
-                    const hScale = 0.8 + Math.random() * 0.4;
+                    const hScale = 1.1;
                     const fWidth = 180 * hScale;
                     const hitWidth = fWidth * 0.3; // Very small footprint for easier dense grouping
 
