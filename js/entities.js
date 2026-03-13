@@ -34,7 +34,7 @@ let mineImageLoaded = false;
 mineImage.onload = () => { mineImageLoaded = true; };
 
 class Platform {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height, allowHumans = false) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -55,8 +55,8 @@ class Platform {
         if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
-            // 1. SPAWN HUMANS (Balanced density)
-            if (Math.random() > 0.1) { // 90% chance
+            // 1. SPAWN HUMANS (Balanced density) - Only if allowed (20s delay)
+            if (allowHumans && Math.random() > 0.1) { // 90% chance
                 // Spawn 1 to 3 humans
                 const numHumans = Math.floor(Math.random() * 3) + 1;
 

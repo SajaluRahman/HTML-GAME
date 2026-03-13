@@ -16,6 +16,7 @@ const Game = {
 
     // Time tracking
     lastTime: 0,
+    gameStartTime: 0,
 
     // UI Elements
     startScreen: null,
@@ -114,7 +115,12 @@ const Game = {
         }
 
         const heightPadding = 300; // Draw down past screen bottom
-        const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding);
+
+        // Only allow humans if 20 seconds have passed since game start
+        const timeElapsed = (performance.now() - this.gameStartTime) / 1000;
+        const allowHumans = timeElapsed > 20;
+
+        const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding, allowHumans);
         this.platforms.push(plat);
     },
 
@@ -152,6 +158,7 @@ const Game = {
         recordBtn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)';
 
         this.lastTime = performance.now();
+        this.gameStartTime = performance.now();
         requestAnimationFrame((time) => this.loop(time));
     },
 
