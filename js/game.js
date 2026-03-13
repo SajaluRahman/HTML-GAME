@@ -124,8 +124,8 @@ const Game = {
 
         // Determine human types if allowed
         let humanTypes = [];
-        if (allowHumans && width > 100 && Math.random() > 0.1) {
-            const numHumans = Math.floor(Math.random() * 3) + 1;
+        if (allowHumans && width > 150 && Math.random() < 0.4) { // Only 40% chance, wider platforms
+            const numHumans = Math.floor(Math.random() * 2) + 1; // 1 to 2 humans max
             for (let i = 0; i < numHumans; i++) {
                 humanTypes.push(this.getNextHumanType());
             }

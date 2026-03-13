@@ -55,14 +55,71 @@ class Platform {
         if (width > 100) {
             let occupiedRegions = []; // Store {start, end} to prevent overlaps
 
-            // 1. SPAWN HUMANS (Balanced density) - Only if allowed (20s delay)
+            // 1. SPAWN TREES (Priority placement)
+            if (width > 150) { // Require some width for trees
+                const numTrees = Math.floor(Math.random() * 2) + 1; // 1 to 2 trees
+                let availableTrees = [];
+                for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
+
+                for (let i = 0; i < numTrees; i++) {
+                    const treeScale = 0.7 + Math.random() * 0.3; // Slightly smaller to fit better
+                    const tWidth = 250 * treeScale;
+                    const hitWidth = tWidth * 0.4;
+
+                    let treeX = 10;
+                    let placed = false;
+
+                    // Tighten bounds: tree origin is left edge, assets have some transparency
+                    // We want to ensure the visual trunk/base stays on the platform
+                    const margin = 30;
+                    const maxTreeX = width - tWidth + margin;
+                    const minTreeX = -margin;
+
+                    for (let attempt = 0; attempt < 20; attempt++) {
+                        treeX = minTreeX + Math.random() * Math.max(0, maxTreeX - minTreeX);
+
+                        let coreStart = treeX + (tWidth - hitWidth) / 2;
+                        let coreEnd = coreStart + hitWidth;
+
+                        // Strict check: tree trunk base must be on platform
+                        if (coreStart < 0 || coreEnd > width) continue;
+
+                        let overlap = false;
+                        for (let region of occupiedRegions) {
+                            if (!(coreEnd < region.start || coreStart > region.end)) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+
+                        if (!overlap) {
+                            placed = true;
+                            occupiedRegions.push({ start: coreStart, end: coreEnd });
+                            break;
+                        }
+                    }
+
+                    if (placed) {
+                        const randomIndex = Math.floor(Math.random() * availableTrees.length);
+                        const treeType = availableTrees.length > 0 ? availableTrees.splice(randomIndex, 1)[0] : Math.floor(Math.random() * treeSources.length);
+
+                        this.trees.push({
+                            xOffset: treeX,
+                            scale: treeScale,
+                            typeIndex: treeType
+                        });
+                    }
+                }
+            }
+
+            // 2. SPAWN HUMANS (Gap filler) - Only if allowed (20s delay)
             if (allowHumans && humanTypes.length > 0) {
-                const numHumans = humanTypes.length;
+                const numHumans = Math.min(humanTypes.length, 2); // Cap at 2
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 1.1;
                     const fWidth = 180 * hScale;
-                    const hitWidth = fWidth * 0.3; // Very small footprint for easier dense grouping
+                    const hitWidth = fWidth * 0.3;
 
                     let humanX = 10;
                     let placed = false;
@@ -73,6 +130,10 @@ class Platform {
 
                         let coreStart = humanX + (fWidth - hitWidth) / 2;
                         let coreEnd = coreStart + hitWidth;
+
+                        // Ensure human is on platform
+                        if (coreStart < 0 || coreEnd > width) continue;
+
                         let overlap = false;
                         for (let region of occupiedRegions) {
                             if (!(coreEnd < region.start || coreStart > region.end)) {
@@ -99,54 +160,6 @@ class Platform {
                             scale: hScale
                         });
                     }
-                }
-            }
-
-            // 2. SPAWN TREES (Equal priority)
-            const maxTrees = Math.min(3, treeSources.length);
-            const numTrees = Math.floor(Math.random() * 3) + 1; // 1 to 3 trees
-            let availableTrees = [];
-            for (let i = 0; i < treeSources.length; i++) availableTrees.push(i);
-
-            for (let i = 0; i < numTrees; i++) {
-                const treeScale = 0.8 + Math.random() * 0.4;
-                const tWidth = 250 * treeScale;
-                const hitWidth = tWidth * 0.4;
-
-                let treeX = 10;
-                let placed = false;
-
-                for (let attempt = 0; attempt < 20; attempt++) { // Increased attempts
-                    const maxTreeX = width - tWidth - 10;
-                    treeX = 10 + Math.random() * Math.max(0, maxTreeX - 10);
-
-                    let coreStart = treeX + (tWidth - hitWidth) / 2;
-                    let coreEnd = coreStart + hitWidth;
-                    let overlap = false;
-
-                    for (let region of occupiedRegions) {
-                        if (!(coreEnd < region.start || coreStart > region.end)) {
-                            overlap = true;
-                            break;
-                        }
-                    }
-
-                    if (!overlap) {
-                        placed = true;
-                        occupiedRegions.push({ start: coreStart, end: coreEnd });
-                        break;
-                    }
-                }
-
-                if (placed) {
-                    const randomIndex = Math.floor(Math.random() * availableTrees.length);
-                    const treeType = availableTrees.length > 0 ? availableTrees.splice(randomIndex, 1)[0] : Math.floor(Math.random() * treeSources.length);
-
-                    this.trees.push({
-                        xOffset: treeX,
-                        scale: treeScale,
-                        typeIndex: treeType
-                    });
                 }
             }
         }
