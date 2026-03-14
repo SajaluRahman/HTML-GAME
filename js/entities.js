@@ -350,11 +350,11 @@ class Goat {
                     currentGravity = this.gravity * 0.5;
                 }
             } else {
-                // If voice stops completely, fall very aggressively
-                currentGravity = this.gravity * 3.0;
+                // If voice stops completely, fall faster (but not too aggressively)
+                currentGravity = this.gravity * 2.0;
                 if (this.velocityY < 0) {
-                    // Instantly kill upward momentum if user stops voice on the way up
-                    this.velocityY *= 0.2;
+                    // Reduce upward momentum if user stops voice on the way up
+                    this.velocityY *= 0.5;
                 }
             }
         }

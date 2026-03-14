@@ -12,12 +12,16 @@ const VoiceAnalyzer = {
     startTime: 0,
     pitch: 0,
 
+    // Time-domain data for instant voice detection
+    timeDomainArray: null,
+
     // Audio stream for MediaRecorder
     mediaStreamDestination: null,
 
     // Thresholds
-    noiseGate: 15, // Must be loud enough to trigger jump (ignores background noise)
+    noiseGate: 10, // Lowered for easier re-trigger after silence
     maxVolume: 120, // Volume at which it is considered a full 1.0/100% effort
+    waveformThreshold: 20, // Amplitude deviation from 128 (silence) in time-domain data
 
     async init(audioStream) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -25,7 +29,7 @@ const VoiceAnalyzer = {
 
         // High buffer size for better frequency resolution
         this.analyser.fftSize = 4096;
-        this.analyser.smoothingTimeConstant = 0.3; // Low smoothing for quick reaction
+        this.analyser.smoothingTimeConstant = 0.15; // Very low smoothing for instant reaction after silence
 
         this.source = this.audioContext.createMediaStreamSource(audioStream);
         this.source.connect(this.analyser);
@@ -37,13 +41,23 @@ const VoiceAnalyzer = {
         // Do NOT connect source to audioContext.destination! That would result in speaker feedback.
 
         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        this.timeDomainArray = new Uint8Array(this.analyser.fftSize);
     },
 
     update(deltaTime) {
         if (!this.analyser) return;
 
+        // Resume AudioContext if browser suspended it (common after inactivity on mobile)
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
         // Read frequency level from analyzer
         this.analyser.getByteFrequencyData(this.dataArray);
+
+        // Also read time-domain (waveform) data for instant voice detection
+        // This bypasses smoothing and reacts immediately to new sound
+        this.analyser.getByteTimeDomainData(this.timeDomainArray);
 
         // Calculate average volume across frequency spectrum
         let sum = 0;
@@ -64,7 +78,19 @@ const VoiceAnalyzer = {
         let avgVolume = sum / this.dataArray.length;
         this.volume = avgVolume;
 
-        if (this.volume > this.noiseGate) {
+        // Check waveform amplitude as a secondary instant-detection path
+        // Time-domain data centers at 128 (silence). Deviation = voice activity.
+        let maxWaveDeviation = 0;
+        for (let i = 0; i < this.timeDomainArray.length; i++) {
+            const deviation = Math.abs(this.timeDomainArray[i] - 128);
+            if (deviation > maxWaveDeviation) maxWaveDeviation = deviation;
+        }
+        const waveformDetected = maxWaveDeviation > this.waveformThreshold;
+
+        // Voice is detected if EITHER frequency data OR waveform data show activity
+        // Waveform detection is instant (no smoothing delay), so it catches voice
+        // immediately after silence even before frequency data ramps up
+        if (this.volume > this.noiseGate || waveformDetected) {
             if (!this.isVocalizing) {
                 // Just started making sound
                 this.isVocalizing = true;
