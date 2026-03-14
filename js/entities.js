@@ -33,6 +33,12 @@ mineImage.src = 'assets/mine2.png';
 let mineImageLoaded = false;
 mineImage.onload = () => { mineImageLoaded = true; };
 
+// Load Quikzii Champion Coin
+const quikziiImage = new Image();
+quikziiImage.src = 'assets/quikzii.png';
+let quikziiImageLoaded = false;
+quikziiImage.onload = () => { quikziiImageLoaded = true; };
+
 class Platform {
     constructor(x, y, width, height, allowHumans = false, humanTypes = []) {
         this.x = x;
@@ -50,6 +56,7 @@ class Platform {
         this.farmers = [];
         this.coins = [];
         this.mines = [];
+        this.quikziiCoin = null; // Special champion coin, set by Game after 2 min
 
         // Only put trees/farmers/hazards on most platforms
         if (width > 100) {
@@ -296,6 +303,44 @@ class Platform {
                     ctx.restore();
                 }
             }
+        }
+
+        // Draw Quikzii Champion Coin (big round glowing coin)
+        if (this.quikziiCoin && !this.quikziiCoin.collected && quikziiImageLoaded) {
+            const q = this.quikziiCoin;
+            const qX = this.x + q.xOffset;
+            const bounce = Math.sin(performance.now() / 300) * 12;
+            const qY = this.y - q.yOffset + bounce;
+            const size = q.width;
+            const centerX = qX + size / 2;
+            const centerY = qY + size / 2;
+            const radius = size / 2;
+
+            // Glowing aura behind
+            const pulseScale = 1.0 + Math.sin(performance.now() / 400) * 0.15;
+            const glowRadius = radius * 1.6 * pulseScale;
+            const glow = ctx.createRadialGradient(centerX, centerY, radius * 0.5, centerX, centerY, glowRadius);
+            glow.addColorStop(0, 'rgba(255, 215, 0, 0.5)');
+            glow.addColorStop(0.5, 'rgba(255, 165, 0, 0.2)');
+            glow.addColorStop(1, 'rgba(255, 165, 0, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Golden circle border
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+
+            // Clip to circle and draw image
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(quikziiImage, qX, qY, size, size);
+            ctx.restore();
         }
     }
 }

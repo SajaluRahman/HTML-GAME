@@ -55,6 +55,12 @@ const Game = {
         document.getElementById('save-screenshot-btn').addEventListener('click', () => this.saveScreenshot());
         document.getElementById('share-screenshot-btn').addEventListener('click', () => this.shareScreenshot());
         document.getElementById('record-btn').addEventListener('click', (e) => this.toggleRecording(e.target));
+
+        // Champion screen buttons
+        document.getElementById('champion-restart-btn').addEventListener('click', () => this.startGainingPermissions());
+        document.getElementById('champion-screenshot-btn').addEventListener('click', () => this.takeChampionScreenshot());
+        document.getElementById('champion-save-btn').addEventListener('click', () => this.saveChampionScreenshot());
+        document.getElementById('champion-share-btn').addEventListener('click', () => this.shareChampionScreenshot());
     },
 
     resize() {
@@ -132,11 +138,28 @@ const Game = {
         }
 
         const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding, allowHumans, humanTypes);
+
+        // Place Quikzii champion coin after 2 minutes (only once)
+        const timeElapsedForQuikzii = (performance.now() - this.gameStartTime) / 1000;
+        if (!this.quikziiSpawned && timeElapsedForQuikzii >= 120 && width >= 150) {
+            const coinSize = 100;
+            const qX = (width - coinSize) / 2; // Center on platform
+            plat.quikziiCoin = {
+                xOffset: qX,
+                yOffset: coinSize + 20, // Float above platform
+                width: coinSize,
+                height: coinSize,
+                collected: false
+            };
+            this.quikziiSpawned = true;
+        }
+
         this.platforms.push(plat);
     },
 
     resetGame() {
         this.gameOverScreen.classList.remove('active');
+        document.getElementById('champion-screen').classList.remove('active');
         this.hudScreen.classList.add('active');
 
         this.score = 0;
@@ -149,6 +172,8 @@ const Game = {
         this.isRunning = true;
         this.isDead = false;
         this.particles = [];
+        this.quikziiSpawned = false; // Track if champion coin has been placed
+        this.isChampion = false; // Track win state
 
         // Starting goat position, a bit to the left
         this.goat = new Goat(this.canvas.width * 0.15, this.canvas.height * 0.3);
@@ -164,6 +189,10 @@ const Game = {
         // Hide screenshot preview cleanly
         document.getElementById('screenshot-preview-container').style.display = 'none';
         document.getElementById('screenshot-btn').style.display = 'inline-block';
+
+        // Reset champion screenshot state
+        document.getElementById('champion-screenshot-preview-container').style.display = 'none';
+        document.getElementById('champion-screenshot-btn').style.display = 'inline-block';
 
         // Reset record button state
         const recordBtn = document.getElementById('record-btn');
@@ -397,6 +426,19 @@ const Game = {
                     }
                 }
             }
+
+            // Check Quikzii Champion Coin
+            if (plat.quikziiCoin && !plat.quikziiCoin.collected) {
+                const qc = plat.quikziiCoin;
+                const qX = plat.x + qc.xOffset;
+                const qBounce = Math.sin(performance.now() / 300) * 12;
+                const qY = plat.y - qc.yOffset + qBounce;
+                if (gX < qX + qc.width && gX + gW > qX &&
+                    gY < qY + qc.height && gY + gH > qY) {
+                    qc.collected = true;
+                    this.win(); // Champion!
+                }
+            }
         }
 
         // Remove off-screen platforms
@@ -517,6 +559,49 @@ const Game = {
         }, 1500);
     },
 
+    win() {
+        if (this.isDead || this.isChampion) return;
+        this.isChampion = true;
+        this.gameSpeed = 0;
+        SFX.stopBGM();
+
+        // Celebration particles (golden)
+        this.particles = [];
+        for (let i = 0; i < 80; i++) {
+            this.particles.push({
+                x: this.goat.x + this.goat.width / 2,
+                y: this.goat.y + this.goat.height / 2,
+                vx: (Math.random() - 0.5) * 25,
+                vy: (Math.random() - 0.5) * 25 - 12,
+                life: 1.0,
+                color: ['#FFD700', '#FFA500', '#FFEB3B', '#FFE082', '#FFF176'][Math.floor(Math.random() * 5)],
+                size: Math.random() * 10 + 4
+            });
+        }
+        this.isDead = true; // Reuse for particle animation
+
+        setTimeout(() => {
+            this.isGameOver = true;
+            this.isRunning = false;
+
+            // Stop recording
+            if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
+                this.mediaRecorder.stop();
+                const recordBtn = document.getElementById('record-btn');
+                recordBtn.textContent = '⏺ Record';
+                recordBtn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)';
+            }
+
+            MediaHandler.stopAudio();
+            this.hudScreen.classList.remove('active');
+
+            // Show champion screen instead of game over
+            const championScreen = document.getElementById('champion-screen');
+            document.getElementById('champion-score').textContent = this.score;
+            championScreen.classList.add('active');
+        }, 1500);
+    },
+
     takeScreenshot() {
         // Redraw immediately to ensure we have the clean frame
         this.draw();
@@ -568,6 +653,69 @@ const Game = {
                 await navigator.share({
                     title: 'My Goat Jump Score!',
                     text: `I scored ${this.score} in Goat Jump Voice Challenge! 🐐`,
+                    files: [file]
+                });
+            } else {
+                alert("Sharing files is not supported on this browser/device.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    },
+
+    takeChampionScreenshot() {
+        this.draw();
+
+        // Champion overlay
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        this.ctx.roundRect(this.canvas.width / 2 - 160, this.canvas.height / 2 - 100, 320, 200, 20);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 28px "Segoe UI", Tahoma, sans-serif';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(`🏆 Champion of Quikzee!`, this.canvas.width / 2, this.canvas.height / 2 - 40);
+
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = 'bold 22px "Segoe UI", Tahoma, sans-serif';
+        this.ctx.fillText(`Score: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 10);
+
+        this.ctx.fillStyle = '#FFEB3B';
+        this.ctx.font = 'bold 16px "Segoe UI", Tahoma, sans-serif';
+        this.ctx.fillText(`Goat Jump Voice Challenge`, this.canvas.width / 2, this.canvas.height / 2 + 50);
+        this.ctx.restore();
+
+        const dataUrl = this.canvas.toDataURL("image/png");
+        document.getElementById('champion-screenshot-preview').src = dataUrl;
+        document.getElementById('champion-screenshot-preview-container').style.display = 'block';
+        document.getElementById('champion-screenshot-btn').style.display = 'none';
+
+        this.draw();
+    },
+
+    saveChampionScreenshot() {
+        const dataUrl = document.getElementById('champion-screenshot-preview').src;
+        if (!dataUrl) return;
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `quikzee_champion_${Date.now()}.png`;
+        a.click();
+    },
+
+    async shareChampionScreenshot() {
+        const dataUrl = document.getElementById('champion-screenshot-preview').src;
+        if (!dataUrl) return;
+
+        try {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], `quikzee_champion_${Date.now()}.png`, { type: 'image/png' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'Champion of Quikzee! 🏆',
+                    text: `I'm the Champion of Quikzee with a score of ${this.score}! 🐐🏆`,
                     files: [file]
                 });
             } else {
