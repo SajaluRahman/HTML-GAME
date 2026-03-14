@@ -16,7 +16,7 @@ const VoiceAnalyzer = {
     mediaStreamDestination: null,
 
     // Thresholds
-    noiseGate: 12, // Must be loud enough to trigger jump (ignores background noise)
+    noiseGate: 15, // Must be loud enough to trigger jump (ignores background noise)
     maxVolume: 120, // Volume at which it is considered a full 1.0/100% effort
 
     async init(audioStream) {

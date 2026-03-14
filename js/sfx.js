@@ -14,8 +14,16 @@ const SFX = {
 
         if (this.ctx) {
             this.bgmSource = this.ctx.createMediaElementSource(this.bgm);
-            this.bgmSource.connect(this.ctx.destination);
+
+            // Create a GainNode for BGM to control playback volume independently of recording
+            this.bgmGain = this.ctx.createGain();
+            this.bgmGain.gain.setValueAtTime(0.3, this.ctx.currentTime); // Lower volume to prevent mic feedback
+
+            this.bgmSource.connect(this.bgmGain);
+            this.bgmGain.connect(this.ctx.destination); // Play to speakers at lower volume
+
             if (this.recordingDestination) {
+                // Keep recording volume higher or balanced
                 this.bgmSource.connect(this.recordingDestination);
             }
         }

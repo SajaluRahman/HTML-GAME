@@ -313,7 +313,7 @@ class Goat {
 
         // Image
         this.image = new Image();
-        this.image.src = 'assets/pinki2.png'; // Updated avatar
+        this.image.src = 'assets/aad.png'; // Updated avatar
         this.imageLoaded = false;
         this.image.onload = () => { this.imageLoaded = true; };
 
