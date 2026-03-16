@@ -19,6 +19,7 @@ const Game = {
     // Time tracking
     lastTime: 0,
     gameStartTime: 0,
+    activePlayTime: 0,
 
     // UI Elements
     startScreen: null,
@@ -142,8 +143,8 @@ const Game = {
         const plat = new Platform(rightMostX + gap, y, width, this.canvas.height - y + heightPadding, allowHumans, humanTypes);
 
         // Place Quikzii champion coin after 2 minutes (only once)
-        const timeElapsedForQuikzii = (performance.now() - this.gameStartTime) / 1000;
-        if (!this.quikziiSpawned && timeElapsedForQuikzii >= 120 && width >= 150) {
+        // Place Quikzii champion coin after 2 minutes of ACTIVE play
+        if (!this.quikziiSpawned && this.activePlayTime >= 120 && width >= 150) {
             const coinSize = 100;
             const qX = (width - coinSize) / 2; // Center on platform
             plat.quikziiCoin = {
@@ -176,6 +177,7 @@ const Game = {
         this.particles = [];
         this.quikziiSpawned = false; // Track if champion coin has been placed
         this.isChampion = false; // Track win state
+        this.activePlayTime = 0; // Cumulative time vocalizing/moving
 
         // Starting goat position, a bit to the left
         this.goat = new Goat(this.canvas.width * 0.15, this.canvas.height * 0.3);
@@ -458,10 +460,12 @@ const Game = {
         this.score = Math.floor(this.distanceTraveled / 60) + (this.bonusScore || 0);
         this.scoreVal.textContent = this.score;
 
-        // Timer update
-        const timeElapsedTotal = (performance.now() - this.gameStartTime) / 1000;
-        const minutes = Math.floor(timeElapsedTotal / 60);
-        const seconds = Math.floor(timeElapsedTotal % 60);
+        // Timer update (Active Play Time)
+        if (this.gameSpeed > 0) {
+            this.activePlayTime += deltaTime / 1000;
+        }
+        const minutes = Math.floor(this.activePlayTime / 60);
+        const seconds = Math.floor(this.activePlayTime % 60);
         this.timerVal.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
 
         // Dead? (Fell off screen)
@@ -640,6 +644,11 @@ const Game = {
         this.ctx.fillText(`${this.score}`, this.canvas.width / 2, overlayY + 110);
         this.ctx.restore();
 
+        // Capture as Blob immediately for reliable saving
+        this.canvas.toBlob((blob) => {
+            this.lastScreenshotBlob = blob;
+        }, 'image/png');
+
         const dataUrl = this.canvas.toDataURL("image/png");
         document.getElementById('screenshot-preview').src = dataUrl;
         document.getElementById('screenshot-preview-container').style.display = 'block';
@@ -650,25 +659,20 @@ const Game = {
     },
 
     saveScreenshot() {
-        const dataUrl = document.getElementById('screenshot-preview').src;
-        if (!dataUrl) return;
+        if (!this.lastScreenshotBlob) return;
 
-        // Use Blob for more reliable saving especially on mobile/diverse browsers
-        fetch(dataUrl)
-            .then(res => res.blob())
-            .then(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `goat_jump_score_${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-            });
+        const url = URL.createObjectURL(this.lastScreenshotBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `goat_jump_score_${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     },
 
     async shareScreenshot() {
@@ -717,6 +721,11 @@ const Game = {
         this.ctx.fillText(`Goat Jump Voice Challenge`, this.canvas.width / 2, this.canvas.height / 2 + 50);
         this.ctx.restore();
 
+        // Capture as Blob immediately for reliable saving
+        this.canvas.toBlob((blob) => {
+            this.lastChampionScreenshotBlob = blob;
+        }, 'image/png');
+
         const dataUrl = this.canvas.toDataURL("image/png");
         document.getElementById('champion-screenshot-preview').src = dataUrl;
         document.getElementById('champion-screenshot-preview-container').style.display = 'block';
@@ -726,24 +735,20 @@ const Game = {
     },
 
     saveChampionScreenshot() {
-        const dataUrl = document.getElementById('champion-screenshot-preview').src;
-        if (!dataUrl) return;
+        if (!this.lastChampionScreenshotBlob) return;
 
-        fetch(dataUrl)
-            .then(res => res.blob())
-            .then(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = `quikzee_champion_${Date.now()}.png`;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
-            });
+        const url = URL.createObjectURL(this.lastChampionScreenshotBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `quikzee_champion_${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     },
 
     async shareChampionScreenshot() {
