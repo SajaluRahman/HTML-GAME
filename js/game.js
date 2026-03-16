@@ -617,17 +617,27 @@ const Game = {
         // Imprint the final score and text onto the canvas directly so it gets saved in the image
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        this.ctx.roundRect(this.canvas.width / 2 - 150, this.canvas.height / 2 - 80, 300, 160, 20);
-        this.ctx.fill();
+        const overlayW = 300, overlayH = 160;
+        const overlayX = this.canvas.width / 2 - overlayW / 2;
+        const overlayY = this.canvas.height / 2 - overlayH / 2;
+
+        if (this.ctx.roundRect) {
+            this.ctx.beginPath();
+            this.ctx.roundRect(overlayX, overlayY, overlayW, overlayH, 20);
+            this.ctx.fill();
+        } else {
+            // Fallback for older browsers
+            this.ctx.fillRect(overlayX, overlayY, overlayW, overlayH);
+        }
 
         this.ctx.fillStyle = '#ffeb3b';
         this.ctx.font = 'bold 36px "Segoe UI", Tahoma, sans-serif';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText(`Goat Jump Final Score`, this.canvas.width / 2, this.canvas.height / 2 - 20);
+        this.ctx.fillText(`Goat Jump Final Score`, this.canvas.width / 2, overlayY + 50);
 
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 48px "Segoe UI", Tahoma, sans-serif';
-        this.ctx.fillText(`${this.score}`, this.canvas.width / 2, this.canvas.height / 2 + 40);
+        this.ctx.fillText(`${this.score}`, this.canvas.width / 2, overlayY + 110);
         this.ctx.restore();
 
         const dataUrl = this.canvas.toDataURL("image/png");
@@ -642,10 +652,23 @@ const Game = {
     saveScreenshot() {
         const dataUrl = document.getElementById('screenshot-preview').src;
         if (!dataUrl) return;
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `goat_jump_score_${Date.now()}.png`;
-        a.click();
+
+        // Use Blob for more reliable saving especially on mobile/diverse browsers
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `goat_jump_score_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
     },
 
     async shareScreenshot() {
@@ -705,10 +728,22 @@ const Game = {
     saveChampionScreenshot() {
         const dataUrl = document.getElementById('champion-screenshot-preview').src;
         if (!dataUrl) return;
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `quikzee_champion_${Date.now()}.png`;
-        a.click();
+
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `quikzee_champion_${Date.now()}.png`;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
     },
 
     async shareChampionScreenshot() {
