@@ -270,8 +270,8 @@ const Game = {
 
     getNextHumanType() {
         if (this.humanTypeBag.length === 0) {
-            // Refill bag with all 5 human indices [0, 1, 2, 3, 4]
-            const available = [0, 1, 2, 3, 4];
+            // Refill bag dynamically based on human sources
+            const available = humanSources.map((_, i) => i);
 
             // Randomly shuffle the available indices
             for (let i = available.length - 1; i > 0; i--) {
