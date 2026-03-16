@@ -12,7 +12,7 @@ for (let i = 0; i < treeSources.length; i++) {
 
 // Load all human varieties
 const humanImages = [];
-const humanSources = ['assets/lalan.png', 'assets/abu.png', 'assets/pappan.png', 'assets/shameer.png', 'assets/ponnappan.png'];
+const humanSources = ['assets/lalan.png', 'assets/abu.png', 'assets/pappan.png', 'assets/shameer.png', 'assets/ponnappan.png', 'assets/dude.png'];
 let loadedHumans = 0;
 
 for (let i = 0; i < humanSources.length; i++) {
