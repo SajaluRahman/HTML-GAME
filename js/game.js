@@ -26,6 +26,7 @@ const Game = {
     gameOverScreen: null,
     scoreVal: null,
     finalScore: null,
+    timerVal: null,
 
     // Recording & Screenshot
     mediaRecorder: null,
@@ -41,6 +42,7 @@ const Game = {
         this.gameOverScreen = document.getElementById('game-over-screen');
         this.scoreVal = document.getElementById('score-val');
         this.finalScore = document.getElementById('final-score');
+        this.timerVal = document.getElementById('timer-val');
 
         // Handle Resize
         window.addEventListener('resize', () => this.resize());
@@ -455,6 +457,12 @@ const Game = {
         this.distanceTraveled += this.gameSpeed * (deltaTime / 16);
         this.score = Math.floor(this.distanceTraveled / 60) + (this.bonusScore || 0);
         this.scoreVal.textContent = this.score;
+
+        // Timer update
+        const timeElapsedTotal = (performance.now() - this.gameStartTime) / 1000;
+        const minutes = Math.floor(timeElapsedTotal / 60);
+        const seconds = Math.floor(timeElapsedTotal % 60);
+        this.timerVal.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
 
         // Dead? (Fell off screen)
         if (this.goat.y > this.canvas.height + 200) {

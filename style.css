@@ -110,7 +110,8 @@ html {
 
 /* Glassmorphism for menus */
 #start-screen,
-#game-over-screen {
+#game-over-screen,
+#champion-screen {
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -125,10 +126,39 @@ html {
     left: 50%;
     transform: translate(-50%, -50%);
     height: auto;
+    max-height: 85vh;
+    /* Limit height */
+    overflow-y: auto;
+    /* Enable scroll */
     text-align: center;
     color: white;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Premium Scrollbar */
+#game-over-screen::-webkit-scrollbar,
+#champion-screen::-webkit-scrollbar {
+    width: 8px;
+}
+
+#game-over-screen::-webkit-scrollbar-track,
+#champion-screen::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+#game-over-screen::-webkit-scrollbar-thumb,
+#champion-screen::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #FFD700, #FFA000);
+    border-radius: 10px;
+}
+
+#champion-screen {
+    background: rgba(40, 20, 0, 0.85);
+    /* Slightly darker for champion */
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
 h1 {
@@ -191,6 +221,32 @@ button:active {
     margin-bottom: 10px;
 }
 
+.prize-text {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 18px;
+    margin: 10px 0;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
 @keyframes floating {
     0% {
         transform: translateY(0px);
@@ -207,7 +263,8 @@ button:active {
 
 .logos-container {
     position: absolute;
-    top: 80px;
+    bottom: 60px;
+    /* Moved to bottom, above the ticker */
     left: 20px;
     display: flex;
     gap: 15px;
@@ -222,6 +279,12 @@ button:active {
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.1);
     padding: 5px;
+}
+
+.start-logos {
+    position: static;
+    margin-top: 20px;
+    justify-content: center;
 }
 
 /* HUD */
@@ -242,6 +305,19 @@ button:active {
     background: rgba(0, 0, 0, 0.3);
     padding: 10px 20px;
     border-radius: 20px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.timer-board {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffeb3b;
+    /* Gold/Yellow for the timer */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 15px;
+    border-radius: 15px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
@@ -364,25 +440,26 @@ button:active {
     }
 }
 
-/* Champion Screen */
-#champion-screen {
-    background: rgba(40, 20, 0, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 2px solid rgba(255, 215, 0, 0.5);
-    border-radius: 20px;
-    padding: 25px;
-    width: 90%;
-    max-width: 400px;
-    margin: auto;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: auto;
-    text-align: center;
-    color: white;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.5);
+/* Champion Screen decoration */
+.scroll-decoration {
+    position: sticky;
+    left: 0;
+    width: 100%;
+    height: 15px;
+    background: linear-gradient(to right, #6d4c41, #8d6e63, #6d4c41);
+    border-radius: 10px;
+    border: 2px solid #FFD700;
+    z-index: 5;
+}
+
+.scroll-decoration.top {
+    top: -30px;
+    margin-bottom: 10px;
+}
+
+.scroll-decoration.bottom {
+    bottom: -30px;
+    margin-top: 10px;
 }
 
 .champion-trophy {

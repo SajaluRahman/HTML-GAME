@@ -24,8 +24,13 @@
                 <img src="assets/titleImg.png" alt="Goat Jump Title" class="title-image">
                 <h1>Goat Jump Voice Challenge</h1>
                 <p>🗣️ The goat runs itself! 🐐</p>
+                <p class="prize-text">✨ Collect Quikzii to win the prizes! ✨</p>
                 <p>mmmaa (low crying) = Small Jump<br>mmmmmaaaaaaa (high crying) = BIG JUMP!</p>
                 <button id="start-btn">Allow Mic & Camera to Start</button>
+                <div class="logos-container start-logos">
+                    <img src="assets/logo.png" alt="Logo 1" class="logo-item">
+                    <img src="assets/logo2.png" alt="Logo 2" class="logo-item">
+                </div>
                 <p class="error-msg" id="start-error"></p>
             </div>
 
@@ -42,6 +47,7 @@
                     <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
                         <div class="score-board" style="position: relative; top: 0; right: 0;">Score: <span
                                 id="score-val">0</span></div>
+                        <div class="timer-board" id="timer-val">Time: 0:00</div>
                         <button id="record-btn"
                             style="background: linear-gradient(135deg, #e53935, #b71c1c); padding: 10px 15px; font-size: 14px; width: auto; border-radius: 20px;">⏺
                             Record</button>
@@ -57,6 +63,11 @@
             <div id="game-over-screen" class="screen">
                 <img src="assets/titleImg.png" alt="Goat Jump" class="title-image small">
                 <h2>Game Over! 🐐</h2>
+                <div class="logos-container start-logos" style="margin-bottom: 20px;">
+                    <img src="assets/logo.png" alt="Logo 1" class="logo-item">
+                    <img src="assets/logo2.png" alt="Logo 2" class="logo-item">
+                </div>
+                <p class="prize-text">Don't give up! Collect Quikzii to win prizes! 🏆</p>
                 <p>Score: <span id="final-score">0</span></p>
 
                 <div id="screenshot-actions">
@@ -76,9 +87,14 @@
 
             <!-- Champion Screen (Win) -->
             <div id="champion-screen" class="screen">
+                <div class="scroll-decoration top"></div>
                 <img src="assets/titleImg.png" alt="Goat Jump" class="title-image small">
                 <div class="champion-trophy">🏆</div>
                 <h2 class="champion-title">Champion of Quikzee!</h2>
+                <div class="logos-container start-logos" style="margin-bottom: 20px;">
+                    <img src="assets/logo.png" alt="Logo 1" class="logo-item">
+                    <img src="assets/logo2.png" alt="Logo 2" class="logo-item">
+                </div>
                 <div class="champion-coin-display">
                     <img src="assets/quikzii.png" alt="Quikzii" class="champion-coin-img">
                 </div>
@@ -97,6 +113,7 @@
                 </div>
 
                 <button id="champion-restart-btn" style="margin-top: 15px;">Play Again</button>
+                <div class="scroll-decoration bottom"></div>
             </div>
 
         </div>
