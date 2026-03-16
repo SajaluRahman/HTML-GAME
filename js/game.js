@@ -230,16 +230,27 @@ const Game = {
     },
 
     toggleRecording(btn) {
+        const hudLogos = this.hudScreen.querySelector('.logos-container');
         if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
             // Stop recording
             this.mediaRecorder.stop();
             btn.textContent = '⏺ Record';
             btn.style.background = 'linear-gradient(135deg, #e53935, #b71c1c)'; // Red
+            if (hudLogos) hudLogos.style.display = 'flex'; // Show HTML logos again
+            // Show HTML HUD elements again
+            if (this.timerVal) this.timerVal.style.display = '';
+            const scoreBoard = this.hudScreen.querySelector('.score-board');
+            if (scoreBoard) scoreBoard.style.display = '';
         } else {
             // Start recording
             this.recordedChunks = [];
             btn.textContent = '⏹ Stop Recording';
             btn.style.background = 'linear-gradient(135deg, #43a047, #1b5e20)'; // Green
+            if (hudLogos) hudLogos.style.display = 'none'; // Hide HTML logos (canvas draws them)
+            // Hide HTML HUD elements (canvas draws them)
+            if (this.timerVal) this.timerVal.style.display = 'none';
+            const scoreBoard = this.hudScreen.querySelector('.score-board');
+            if (scoreBoard) scoreBoard.style.display = 'none';
             this.startRecording();
         }
     },
@@ -549,42 +560,80 @@ const Game = {
 
         // Add UI to Canvas if Recording
         if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
-            this.ctx.save();
+            this._drawLogosOnCanvas();
+            this._drawTimerOnCanvas();
+        }
+    },
 
-            // 1. Draw Logos (Bottom Left)
-            const logoSize = 60;
-            const padding = 20;
-            const startX = padding;
-            const startY = this.canvas.height - logoSize - padding - 30; // Above ticker
+    // Helper: Draw logos at bottom-left of canvas (preserves aspect ratio like CSS object-fit: contain)
+    _drawLogosOnCanvas() {
+        this.ctx.save();
+        const boxSize = 50; // CSS .logo-item size
+        const logoPadding = 5;
+        const totalSize = boxSize + logoPadding * 2;
+        const gap = 15;
+        const startX = 20;
+        const startY = this.canvas.height - totalSize - 60;
 
-            if (logo1ImageLoaded) this.ctx.drawImage(logo1Image, startX, startY, logoSize, logoSize);
-            if (logo2ImageLoaded) this.ctx.drawImage(logo2Image, startX + logoSize + 10, startY, logoSize, logoSize);
-            if (quikziiImageLoaded) this.ctx.drawImage(quikziiImage, startX + (logoSize + 10) * 2, startY, logoSize, logoSize);
+        const logos = [];
+        if (logo1ImageLoaded) logos.push(logo1Image);
+        if (logo2ImageLoaded) logos.push(logo2Image);
+        if (quikziiImageLoaded) logos.push(quikziiImage);
 
-            // 2. Draw Timer (Top Right)
-            const mins = Math.floor(this.activePlayTime / 60);
-            const secs = Math.floor(this.activePlayTime % 60);
-            const timerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+        for (let i = 0; i < logos.length; i++) {
+            const x = startX + i * (totalSize + gap);
+            const y = startY;
 
-            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.font = 'bold 24px Arial, sans-serif';
-            const textWidth = this.ctx.measureText(`Time: ${timerText}`).width;
-
-            // Timer Background
+            // Rounded background
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+            this.ctx.shadowBlur = 5;
             this.ctx.beginPath();
             if (this.ctx.roundRect) {
-                this.ctx.roundRect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40, 10);
+                this.ctx.roundRect(x, y, totalSize, totalSize, 8);
             } else {
-                this.ctx.rect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40);
+                this.ctx.rect(x, y, totalSize, totalSize);
             }
             this.ctx.fill();
+            this.ctx.shadowBlur = 0;
 
-            this.ctx.fillStyle = '#FFD700'; // Gold
-            this.ctx.textAlign = 'right';
-            this.ctx.fillText(`Time: ${timerText}`, this.canvas.width - 30, 48);
-
-            this.ctx.restore();
+            // Draw logo preserving aspect ratio (object-fit: contain)
+            const img = logos[i];
+            const imgW = img.naturalWidth || img.width;
+            const imgH = img.naturalHeight || img.height;
+            const ratio = Math.min(boxSize / imgW, boxSize / imgH);
+            const drawW = imgW * ratio;
+            const drawH = imgH * ratio;
+            const offsetX = (boxSize - drawW) / 2;
+            const offsetY = (boxSize - drawH) / 2;
+            this.ctx.drawImage(img, x + logoPadding + offsetX, y + logoPadding + offsetY, drawW, drawH);
         }
+        this.ctx.restore();
+    },
+
+    // Helper: Draw timer at top-right of canvas
+    _drawTimerOnCanvas() {
+        this.ctx.save();
+        const mins = Math.floor(this.activePlayTime / 60);
+        const secs = Math.floor(this.activePlayTime % 60);
+        const timerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.font = 'bold 24px Arial, sans-serif';
+        const textWidth = this.ctx.measureText(`Time: ${timerText}`).width;
+
+        this.ctx.beginPath();
+        if (this.ctx.roundRect) {
+            this.ctx.roundRect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40, 10);
+        } else {
+            this.ctx.rect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40);
+        }
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.textAlign = 'right';
+        this.ctx.fillText(`Time: ${timerText}`, this.canvas.width - 30, 48);
+        this.ctx.restore();
     },
 
     die() {
@@ -701,6 +750,9 @@ const Game = {
         this.ctx.fillStyle = '#ffffff';
         this.ctx.font = 'bold 48px "Segoe UI", Tahoma, sans-serif';
         this.ctx.fillText(`${this.score}`, this.canvas.width / 2, overlayY + 110);
+
+        // Draw logos on screenshot
+        this._drawLogosOnCanvas();
         this.ctx.restore();
 
         // Capture as Blob immediately for reliable saving
@@ -778,6 +830,9 @@ const Game = {
         this.ctx.fillStyle = '#FFEB3B';
         this.ctx.font = 'bold 16px "Segoe UI", Tahoma, sans-serif';
         this.ctx.fillText(`Goat Jump Voice Challenge`, this.canvas.width / 2, this.canvas.height / 2 + 50);
+
+        // Draw logos on champion screenshot
+        this._drawLogosOnCanvas();
         this.ctx.restore();
 
         // Capture as Blob immediately for reliable saving
