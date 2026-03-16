@@ -272,14 +272,7 @@ class Platform {
                 const fY = this.y - fHeight + 20;
 
                 ctx.save();
-                if (!human.facingRight) {
-                    // Flip image horizontally
-                    ctx.translate(fX + fWidth, fY);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(img, 0, 0, fWidth, fHeight);
-                } else {
-                    ctx.drawImage(img, fX, fY, fWidth, fHeight);
-                }
+                ctx.drawImage(img, fX, fY, fWidth, fHeight);
                 ctx.restore();
             }
         }
