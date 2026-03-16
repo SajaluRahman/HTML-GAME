@@ -176,6 +176,54 @@ button:active {
     display: none;
 }
 
+/* New Image Styles */
+.title-image {
+    width: 80%;
+    max-width: 300px;
+    height: auto;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px rgba(255, 235, 59, 0.5));
+    animation: floating 3s ease-in-out infinite;
+}
+
+.title-image.small {
+    width: 60%;
+    margin-bottom: 10px;
+}
+
+@keyframes floating {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.logos-container {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    display: flex;
+    gap: 15px;
+    pointer-events: none;
+}
+
+.logo-item {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px;
+}
+
 /* HUD */
 #hud-screen {
     justify-content: flex-start;
