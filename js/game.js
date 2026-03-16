@@ -135,8 +135,28 @@ const Game = {
         let humanTypes = [];
         if (allowHumans && width > 120 && Math.random() < 0.8) { // 80% chance, platforms > 120px
             const numHumans = Math.floor(Math.random() * 2) + 1; // 1 to 2 humans max
+            // shameer.png = index 3, shameer2.png = index 6 (conflict pair)
+            const SHAMEER_IDX = 3;
+            const SHAMEER2_IDX = 6;
             for (let i = 0; i < numHumans; i++) {
-                humanTypes.push(this.getNextHumanType());
+                let type = this.getNextHumanType();
+                // If this is the 2nd human, check for shameer conflict
+                if (i > 0 && humanTypes.length > 0) {
+                    const first = humanTypes[0];
+                    const isShameerConflict =
+                        (first === SHAMEER_IDX && type === SHAMEER2_IDX) ||
+                        (first === SHAMEER2_IDX && type === SHAMEER_IDX);
+                    if (isShameerConflict) {
+                        // Re-pick: get another one (put this one back conceptually)
+                        type = this.getNextHumanType();
+                        // If still conflicting, just skip the 2nd human
+                        const stillConflict =
+                            (first === SHAMEER_IDX && type === SHAMEER2_IDX) ||
+                            (first === SHAMEER2_IDX && type === SHAMEER_IDX);
+                        if (stillConflict) continue;
+                    }
+                }
+                humanTypes.push(type);
             }
         }
 
@@ -525,6 +545,45 @@ const Game = {
                 }
             }
             this.ctx.globalAlpha = 1.0;
+        }
+
+        // Add UI to Canvas if Recording
+        if (this.mediaRecorder && this.mediaRecorder.state === "recording") {
+            this.ctx.save();
+
+            // 1. Draw Logos (Bottom Left)
+            const logoSize = 60;
+            const padding = 20;
+            const startX = padding;
+            const startY = this.canvas.height - logoSize - padding - 30; // Above ticker
+
+            if (logo1ImageLoaded) this.ctx.drawImage(logo1Image, startX, startY, logoSize, logoSize);
+            if (logo2ImageLoaded) this.ctx.drawImage(logo2Image, startX + logoSize + 10, startY, logoSize, logoSize);
+            if (quikziiImageLoaded) this.ctx.drawImage(quikziiImage, startX + (logoSize + 10) * 2, startY, logoSize, logoSize);
+
+            // 2. Draw Timer (Top Right)
+            const mins = Math.floor(this.activePlayTime / 60);
+            const secs = Math.floor(this.activePlayTime % 60);
+            const timerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.font = 'bold 24px Arial, sans-serif';
+            const textWidth = this.ctx.measureText(`Time: ${timerText}`).width;
+
+            // Timer Background
+            this.ctx.beginPath();
+            if (this.ctx.roundRect) {
+                this.ctx.roundRect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40, 10);
+            } else {
+                this.ctx.rect(this.canvas.width - textWidth - 40, 20, textWidth + 20, 40);
+            }
+            this.ctx.fill();
+
+            this.ctx.fillStyle = '#FFD700'; // Gold
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(`Time: ${timerText}`, this.canvas.width - 30, 48);
+
+            this.ctx.restore();
         }
     },
 

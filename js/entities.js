@@ -12,7 +12,7 @@ for (let i = 0; i < treeSources.length; i++) {
 
 // Load all human varieties
 const humanImages = [];
-const humanSources = ['assets/lalan.png', 'assets/abu.png', 'assets/pappan.png', 'assets/shameer.png', 'assets/ponnappan.png', 'assets/dude.png'];
+const humanSources = ['assets/lalan.png', 'assets/abu.png', 'assets/pappan.png', 'assets/shameer.png', 'assets/ponnappan.png', 'assets/dude.png', 'assets/shameer2.png'];
 let loadedHumans = 0;
 
 for (let i = 0; i < humanSources.length; i++) {
@@ -38,6 +38,16 @@ const quikziiImage = new Image();
 quikziiImage.src = 'assets/quikzii.png';
 let quikziiImageLoaded = false;
 quikziiImage.onload = () => { quikziiImageLoaded = true; };
+
+const logo1Image = new Image();
+logo1Image.src = 'assets/logo.png';
+let logo1ImageLoaded = false;
+logo1Image.onload = () => { logo1ImageLoaded = true; };
+
+const logo2Image = new Image();
+logo2Image.src = 'assets/logo2.png';
+let logo2ImageLoaded = false;
+logo2Image.onload = () => { logo2ImageLoaded = true; };
 
 class Platform {
     constructor(x, y, width, height, allowHumans = false, humanTypes = []) {
