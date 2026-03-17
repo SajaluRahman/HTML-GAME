@@ -114,7 +114,6 @@ class Platform {
 
                     if (placed) {
                         const facingRight = Math.random() > 0.5;
-                        const humanType = humanTypes[j];
 
                         this.farmers.push({
                             xOffset: humanX,
