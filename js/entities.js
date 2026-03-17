@@ -80,7 +80,7 @@ class Platform {
                     const hScale = 1.1;
                     // shameer2.png (index 6) is 1.4x larger, account for it during placement
                     const humanType = humanTypes[j];
-                    const spawnSizeMultiplier = (humanType === 6) ? 1.4 : 1.0;
+                    const spawnSizeMultiplier = (humanType === 6) ? 1.1 : 1.0;
                     const fWidth = 180 * hScale * spawnSizeMultiplier;
                     const hitWidth = fWidth * 0.3;
 
@@ -269,10 +269,11 @@ class Platform {
                 const img = humanImages[human.typeIndex];
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
-                // shameer2.png (index 6) gets extra size
-                const sizeMultiplier = (human.typeIndex === 6) ? 1.4 : 1.0;
-                const fWidth = 180 * human.scale * sizeMultiplier;
-                const fHeight = 300 * human.scale * sizeMultiplier;
+                // shameer2.png (index 6) gets extra size (taller, slightly wider)
+                const widthMultiplier = (human.typeIndex === 6) ? 1.1 : 1.0;
+                const heightMultiplier = (human.typeIndex === 6) ? 1.4 : 1.0;
+                const fWidth = 180 * human.scale * widthMultiplier;
+                const fHeight = 300 * human.scale * heightMultiplier;
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 // shameer2.png (index 6) needs extra offset to stay grounded due to larger size
