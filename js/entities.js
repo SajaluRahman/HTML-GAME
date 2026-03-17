@@ -98,8 +98,10 @@ class Platform {
                         if (humanX < 0 || humanX + fWidth > width) continue;
 
                         let overlap = false;
+                        const visualStart = humanX;
+                        const visualEnd = humanX + fWidth;
                         for (let region of occupiedRegions) {
-                            if (!(coreEnd < region.start || coreStart > region.end)) {
+                            if (!(visualEnd < region.start || visualStart > region.end)) {
                                 overlap = true;
                                 break;
                             }
@@ -107,7 +109,7 @@ class Platform {
 
                         if (!overlap) {
                             placed = true;
-                            occupiedRegions.push({ start: coreStart, end: coreEnd });
+                            occupiedRegions.push({ start: visualStart, end: visualEnd });
                             break;
                         }
                     }
