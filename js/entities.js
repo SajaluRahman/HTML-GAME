@@ -78,7 +78,10 @@ class Platform {
 
                 for (let j = 0; j < numHumans; j++) {
                     const hScale = 1.1;
-                    const fWidth = 180 * hScale;
+                    // shameer2.png (index 6) is 1.4x larger, account for it during placement
+                    const humanType = humanTypes[j];
+                    const spawnSizeMultiplier = (humanType === 6) ? 1.4 : 1.0;
+                    const fWidth = 180 * hScale * spawnSizeMultiplier;
                     const hitWidth = fWidth * 0.3;
 
                     let humanX = 10;
