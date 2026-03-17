@@ -87,15 +87,15 @@ class Platform {
                     let humanX = 10;
                     let placed = false;
 
+                    // Skip if platform is too narrow for full visual width
+                    if (fWidth + 20 > width) continue;
+
                     for (let attempt = 0; attempt < 20; attempt++) {
                         const maxHumanX = width - fWidth - 10;
                         humanX = 10 + Math.random() * Math.max(0, maxHumanX - 10);
 
-                        let coreStart = humanX + (fWidth - hitWidth) / 2;
-                        let coreEnd = coreStart + hitWidth;
-
-                        // Ensure human is on platform
-                        if (coreStart < 0 || coreEnd > width) continue;
+                        // Ensure full visual image is on platform
+                        if (humanX < 0 || humanX + fWidth > width) continue;
 
                         let overlap = false;
                         for (let region of occupiedRegions) {
