@@ -266,7 +266,9 @@ class Platform {
                 if (!img) continue; // Skip if this specific image isn't loaded yet
 
                 const fWidth = 180 * human.scale;
-                const fHeight = 300 * human.scale; // Even taller humans
+                // shameer2.png (index 6) gets extra height
+                const heightMultiplier = (human.typeIndex === 6) ? 1.4 : 1.0;
+                const fHeight = 300 * human.scale * heightMultiplier;
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 const fY = this.y - fHeight + 20;
