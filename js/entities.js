@@ -272,7 +272,7 @@ class Platform {
                 const fX = this.x + human.xOffset;
                 // Humans natively resting their bounding box on edge, push +20px to bury blank feet space
                 // shameer2.png (index 6) needs extra offset to stay grounded due to larger size
-                const buryOffset = (human.typeIndex === 6) ? 25 : 20;
+                const buryOffset = (human.typeIndex === 6) ? 30 : 20;
                 const fY = this.y - fHeight + buryOffset;
 
                 ctx.save();
