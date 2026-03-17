@@ -106,8 +106,8 @@ const Game = {
         const maxGap = 280;
         const gap = minGap + Math.random() * (maxGap - minGap);
 
-        const minWidth = 120;
-        const maxWidth = 350;
+        const minWidth = 180;
+        const maxWidth = 420;
         const width = minWidth + Math.random() * (maxWidth - minWidth);
 
         // Y position (height), kept manageable for jumping
@@ -133,7 +133,7 @@ const Game = {
 
         // Determine human types if allowed
         let humanTypes = [];
-        if (allowHumans && width > 120 && Math.random() < 0.8) { // 80% chance, platforms > 120px
+        if (allowHumans && width > 150 && Math.random() < 0.9) { // 90% chance, platforms > 150px
             const numHumans = Math.floor(Math.random() * 2) + 1; // 1 to 2 humans max
             // shameer.png = index 3, shameer2.png = index 6 (conflict pair)
             const SHAMEER_IDX = 3;
